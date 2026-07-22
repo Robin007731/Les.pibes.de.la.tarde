@@ -144,14 +144,21 @@
     </div>
   </div>
 
-  <footer class="text-center text-xs text-slate-600 my-6 border-t border-slate-800/80 pt-4">
-    Los de la tarde 🔥 • Jukebox Colaborativo
+  <!-- FOOTER PROFESIONAL DE COPYRIGHT -->
+  <footer class="mt-8 pt-4 border-t border-slate-800/80 text-center flex flex-col items-center justify-center gap-1 text-slate-500 text-xs">
+    <p>© <span id="current-year"></span> <strong>Los de la tarde 🔥</strong>. Todos los derechos reservados.</p>
+    <p class="tracking-wide">
+      Diseñado y Desarrollado por <span class="font-bold text-amber-500">Nexus Studios</span> <span class="text-slate-600">•</span> Creado por <span class="font-semibold text-slate-300">Robinson Chagas</span>
+    </p>
   </footer>
 
   <!-- SCRIPT DE FIREBASE Y LÓGICA DE YOUTUBE DATA API -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // Actualiza el año dinámicamente en el Copyright
+    document.getElementById('current-year').innerText = new Date().getFullYear();
 
     // 🔑 API KEY DE YOUTUBE DATA API V3
     const YOUTUBE_API_KEY = "AIzaSyDcsSE-tef4Bs_4W7fuo-tBf1IDEkcLSmA";
