@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Los de la tarde 🔥 - Jukebox Colaborativo</title>
+  <title>Los de la tarde 🔥 - YouTube trucho</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -159,7 +159,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     document.getElementById('current-year').innerText = new Date().getFullYear();
 
@@ -195,7 +195,7 @@
     let isPlaying = false;
     let playlistData = [];
     let isFallbackActive = false;
-    let currentUser = null; // Objeto de usuario autenticado de Firebase
+    let currentUser = null;
 
     // LÓGICA DE PESTAÑAS
     const tabQueue = document.getElementById('tab-queue');
@@ -221,19 +221,24 @@
       contentQueue.classList.remove('flex');
     });
 
-    // SISTEMA DE AUTENTICACIÓN GOOGLE
+    // SISTEMA DE AUTENTICACIÓN OPTIMIZADO PARA IPHONE (REDIRECCIÓN)
     const authModal = document.getElementById('auth-modal');
     const googleLoginBtn = document.getElementById('google-login-btn');
     const currentUserDisplay = document.getElementById('current-user-display');
     const userAvatar = document.getElementById('user-avatar');
     const logoutBtn = document.getElementById('logout-btn');
 
+    // Manejar el resultado del flujo de redirección al regresar a la web
+    getRedirectResult(auth).catch((error) => {
+      console.error("Error en redirección de Google:", error);
+    });
+
     googleLoginBtn.addEventListener('click', async () => {
       try {
-        await signInWithPopup(auth, provider);
+        await signInWithRedirect(auth, provider);
       } catch (error) {
         console.error("Error al iniciar sesión:", error);
-        alert("Ocurrió un error al iniciar sesión con Google.");
+        alert("Ocurrió un error al conectar con Google.");
       }
     });
 
@@ -405,14 +410,12 @@
         return;
       }
 
-      // 1. Sumar a la cola global
       push(playlistRef, {
         videoId: videoId,
         requestedBy: currentUser.displayName || "Invitado",
         timestamp: Date.now()
       });
 
-      // 2. Guardar en la lista del usuario basada en su UID permanente
       const myPlaylistRef = ref(db, `users_playlists/${currentUser.uid}/${videoId}`);
       set(myPlaylistRef, {
         videoId: videoId,
@@ -477,7 +480,7 @@
 
           li.querySelector('.add-again-btn').addEventListener('click', () => {
             addSongToQueue(song.videoId);
-            alert(`¡"${song.title}" sumada a la cola de la fiesta! 🔥`);
+            alert(`¡"${song.title}" sumada a la fila principal! 🔥`);
           });
 
           myContainer.appendChild(li);
