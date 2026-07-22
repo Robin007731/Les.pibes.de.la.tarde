@@ -27,7 +27,7 @@
     <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl max-w-md w-full text-center shadow-2xl flex flex-col items-center">
       <div class="text-5xl mb-3 animate-bounce">🔥</div>
       <h2 class="text-2xl font-black text-amber-500 mb-2">Los de la tarde</h2>
-      <p class="text-slate-400 text-sm mb-6">Inicia sesión con tu cuenta de Google para guardar tu playlist personal y pedir temas a la fiesta.</p>
+      <p class="text-slate-400 text-sm mb-6">Inicia sesión con tu cuenta de Google para guardar tu playlist personal y pedir temas pa chambiar con saborrr.</p>
       
       <button 
         id="google-login-btn"
@@ -121,7 +121,7 @@
           
           <div class="flex items-center gap-2 mb-4 border-b border-slate-700/50 pb-2">
             <button id="tab-queue" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-amber-500 text-slate-950 transition">
-              Cola Fiesta 🔥 (<span id="queue-count">0</span>)
+             fila principal 🔥 (<span id="queue-count">0</span>)
             </button>
             <button id="tab-my-list" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">
               Mi Playlist 🎵
@@ -162,6 +162,9 @@
     import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     document.getElementById('current-year').innerText = new Date().getFullYear();
+
+    // 🔑 LÍMITE MÁXIMO DE CANCIONES EN LA COLA GENERAL
+    const MAX_QUEUE_SIZE = 5;
 
     // 🔑 API KEY DE YOUTUBE DATA API V3
     const YOUTUBE_API_KEY = "AIzaSyDcsSE-tef4Bs_4W7fuo-tBf1IDEkcLSmA";
@@ -221,14 +224,13 @@
       contentQueue.classList.remove('flex');
     });
 
-    // SISTEMA DE AUTENTICACIÓN OPTIMIZADO PARA IPHONE (REDIRECCIÓN)
+    // SISTEMA DE AUTENTICACIÓN GOOGLE
     const authModal = document.getElementById('auth-modal');
     const googleLoginBtn = document.getElementById('google-login-btn');
     const currentUserDisplay = document.getElementById('current-user-display');
     const userAvatar = document.getElementById('user-avatar');
     const logoutBtn = document.getElementById('logout-btn');
 
-    // Manejar el resultado del flujo de redirección al regresar a la web
     getRedirectResult(auth).catch((error) => {
       console.error("Error en redirección de Google:", error);
     });
@@ -480,7 +482,7 @@
 
           li.querySelector('.add-again-btn').addEventListener('click', () => {
             addSongToQueue(song.videoId);
-            alert(`¡"${song.title}" sumada a la fila principal! 🔥`);
+            alert(`¡"${song.title}" sumada a la flia principal! 🔥`);
           });
 
           myContainer.appendChild(li);
@@ -488,7 +490,7 @@
       });
     }
 
-    // ESCUCHAR COLA GENERAL EN TIEMPO REAL
+    // ESCUCHAR COLA GENERAL EN TIEMPO REAL CON LIMPIEZA DE CANCIONES VIEJAS (> 5)
     onValue(playlistRef, async (snapshot) => {
       const data = snapshot.val();
       const container = document.getElementById('playlist-container');
@@ -508,6 +510,14 @@
       }
 
       const keys = Object.keys(data);
+
+      // 🧹 LIMPIEZA AUTOMÁTICA: Si hay más de 5 canciones, borramos la más antigua
+      if (keys.length > MAX_QUEUE_SIZE) {
+        const oldestKey = keys[0]; // La primera clave de Firebase es la más antigua
+        remove(ref(db, `playlist/${oldestKey}`));
+        return; // Al removerla, este callback se volverá a ejecutar automáticamente
+      }
+
       queueCount.innerText = keys.length;
 
       const songsPromises = keys.map(async (key) => {
