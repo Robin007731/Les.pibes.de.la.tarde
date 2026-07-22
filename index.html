@@ -55,13 +55,13 @@
         <h1 class="text-xl font-black text-amber-500 hidden sm:block">Los de la tarde</h1>
       </div>
 
-      <!-- BUSCADOR CON SUGERENCIAS DE YOUTUBE -->
+      <!-- BUSCADOR OFICIAL DE YOUTUBE DATA API -->
       <div class="flex-1 max-w-2xl relative">
         <form id="song-form" class="relative flex items-center">
           <input 
             type="text" 
             id="search-input" 
-            placeholder="Busca una canción o pega un link de YouTube..." 
+            placeholder="Busca una canción en YouTube o pega un link..." 
             autocomplete="off"
             required 
             class="w-full bg-slate-900 border border-slate-700 rounded-full pl-5 pr-28 py-2.5 text-sm focus:outline-none focus:border-amber-500 text-white shadow-inner"
@@ -70,12 +70,12 @@
             type="submit" 
             class="absolute right-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-1.5 rounded-full text-xs transition duration-200 flex items-center gap-1 shadow-md"
           >
-            <span>🔥</span> <span class="hidden sm:inline">Agregar</span>
+            <span>🔍</span> <span class="hidden sm:inline">Buscar</span>
           </button>
         </form>
 
-        <!-- MENÚ DESPLEGABLE DE SUGERENCIAS -->
-        <ul id="suggestions-list" class="absolute z-40 left-0 right-0 bg-slate-900 border border-slate-700 rounded-2xl mt-2 max-h-60 overflow-y-auto hidden shadow-2xl divide-y divide-slate-800/80">
+        <!-- MENÚ DESPLEGABLE CON RESULTADOS REALES DE YOUTUBE -->
+        <ul id="suggestions-list" class="absolute z-40 left-0 right-0 bg-slate-900 border border-slate-700 rounded-2xl mt-2 max-h-80 overflow-y-auto hidden shadow-2xl divide-y divide-slate-800/80">
         </ul>
       </div>
 
@@ -112,11 +112,10 @@
         </section>
       </div>
 
-      <!-- DERECHA: SECCIÓN CON PESTAÑAS (COLA GENERAL vs MI PLAYLIST) -->
+      <!-- DERECHA: SECCIÓN CON PESTAÑAS -->
       <div class="lg:col-span-5 xl:col-span-4">
         <section class="bg-slate-800/80 p-4 rounded-2xl shadow-xl border border-slate-700/80 h-full flex flex-col">
           
-          <!-- SELECTOR DE PESTAÑAS -->
           <div class="flex items-center gap-2 mb-4 border-b border-slate-700/50 pb-2">
             <button id="tab-queue" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-amber-500 text-slate-950 transition">
               Cola Fiesta 🔥 (<span id="queue-count">0</span>)
@@ -126,14 +125,12 @@
             </button>
           </div>
 
-          <!-- CONTENIDO PESTAÑA 1: COLA DE LA FIESTA -->
           <div id="content-queue" class="flex-1 flex flex-col">
             <ul id="playlist-container" class="space-y-3 overflow-y-auto max-h-[480px] pr-1 no-scrollbar flex-1">
               <li class="text-xs text-slate-500 text-center py-12">No hay canciones en la lista aún...</li>
             </ul>
           </div>
 
-          <!-- CONTENIDO PESTAÑA 2: MI PLAYLIST PERSONAL -->
           <div id="content-my-list" class="flex-1 flex-col hidden">
             <p class="text-[11px] text-slate-400 mb-3 text-center">Canciones que has pedido. ¡Haz clic en <strong>+</strong> para ponerla a sonar de nuevo!</p>
             <ul id="my-playlist-container" class="space-y-3 overflow-y-auto max-h-[450px] pr-1 no-scrollbar flex-1">
@@ -151,12 +148,15 @@
     Los de la tarde 🔥 • Jukebox Colaborativo
   </footer>
 
-  <!-- SCRIPT DE FIREBASE Y LÓGICA DE LA APP -->
+  <!-- SCRIPT DE FIREBASE Y LÓGICA DE YOUTUBE DATA API -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // NUEVA Configuración de tu base de datos Firebase
+    // 🔑 PEGA AQUÍ TU API KEY DE GOOGLE / YOUTUBE DATA API V3
+    const YOUTUBE_API_KEY = AIzaSyDcsSE-tef4Bs_4W7fuo-tBf1IDEkcLSmA;
+
+    // Configuración de tu Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBV7SShnRCTNpOloRPZzwxTaOG3FbLGIww",
       authDomain: "los-pibes-de-la-tarde-5465d.firebaseapp.com",
@@ -172,7 +172,6 @@
     const db = getDatabase(app);
     const playlistRef = ref(db, 'playlist');
 
-    // Canciones aleatorias por si la cola se vacía
     const fallbackSongs = [
       { videoId: "5qap5aO4i9A", title: "Lofi Hip Hop Beats", requestedBy: "Radio Los de la tarde 🔥" },
       { videoId: "3tmd-ClpJxA", title: "Cumbia / Fiesta Hits", requestedBy: "Modo Fiesta 🔥" },
@@ -186,7 +185,7 @@
     let isFallbackActive = false;
     let currentUser = localStorage.getItem('user_name') || '';
 
-    // LÓGICA DE PESTAÑAS (TABS)
+    // LÓGICA DE PESTAÑAS
     const tabQueue = document.getElementById('tab-queue');
     const tabMyList = document.getElementById('tab-my-list');
     const contentQueue = document.getElementById('content-queue');
@@ -240,7 +239,7 @@
       nameModal.classList.remove('hidden');
     });
 
-    // REPRODUCTOR YOUTUBE
+    // REPRODUCTOR YOUTUBE IFRAME
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -305,10 +304,54 @@
       }
     }
 
-    // SUGERENCIAS EN TIEMPO REAL
+    // 🔍 BÚSQUEDA REAL CON YOUTUBE DATA API V3
     const searchInput = document.getElementById('search-input');
     const suggestionsList = document.getElementById('suggestions-list');
     let debounceTimer;
+
+    async function searchYouTubeAPI(query) {
+      try {
+        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=5&q=${encodeURIComponent(query)}&type=video&key=${YOUTUBE_API_KEY}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.items && data.items.length > 0) {
+          suggestionsList.innerHTML = '';
+          data.items.forEach((item) => {
+            const videoId = item.id.videoId;
+            const title = item.snippet.title;
+            const channelTitle = item.snippet.channelTitle;
+            const thumbnail = item.snippet.thumbnails.default.url;
+
+            const li = document.createElement('li');
+            li.className = "p-2.5 hover:bg-slate-800 cursor-pointer flex items-center gap-3 transition";
+            li.innerHTML = `
+              <img src="${thumbnail}" class="w-12 h-9 object-cover rounded border border-slate-700 flex-shrink-0" />
+              <div class="overflow-hidden flex-1">
+                <p class="font-semibold text-xs text-slate-200 truncate leading-tight">${title}</p>
+                <p class="text-[10px] text-slate-400 truncate mt-0.5">${channelTitle}</p>
+              </div>
+              <button class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-[10px] px-2.5 py-1 rounded-full shadow flex-shrink-0">
+                + Sumar
+              </button>
+            `;
+
+            li.addEventListener('click', () => {
+              addSongToQueue(videoId);
+              suggestionsList.classList.add('hidden');
+              searchInput.value = '';
+            });
+
+            suggestionsList.appendChild(li);
+          });
+          suggestionsList.classList.remove('hidden');
+        } else {
+          suggestionsList.classList.add('hidden');
+        }
+      } catch (err) {
+        console.error("Error al buscar en la API de YouTube:", err);
+      }
+    }
 
     searchInput.addEventListener('input', (e) => {
       clearTimeout(debounceTimer);
@@ -319,34 +362,10 @@
         return;
       }
 
-      debounceTimer = setTimeout(async () => {
-        try {
-          const res = await fetch(`https://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q=${encodeURIComponent(query)}`);
-          const data = await res.json();
-          const suggestions = data[1].slice(0, 5);
-
-          if (suggestions.length > 0) {
-            suggestionsList.innerHTML = '';
-            suggestions.forEach((item) => {
-              const li = document.createElement('li');
-              li.className = "p-3 hover:bg-slate-800 text-xs text-slate-200 cursor-pointer flex items-center justify-between transition";
-              li.innerHTML = `<span>🎵 ${item}</span> <span class="text-[10px] text-amber-500 font-bold">Seleccionar</span>`;
-              
-              li.addEventListener('click', () => {
-                searchInput.value = item;
-                suggestionsList.classList.add('hidden');
-              });
-
-              suggestionsList.appendChild(li);
-            });
-            suggestionsList.classList.remove('hidden');
-          } else {
-            suggestionsList.classList.add('hidden');
-          }
-        } catch (err) {
-          suggestionsList.classList.add('hidden');
-        }
-      }, 250);
+      // Espera 350ms después de que el usuario deja de escribir para no gastar cuota extra
+      debounceTimer = setTimeout(() => {
+        searchYouTubeAPI(query);
+      }, 350);
     });
 
     document.addEventListener('click', (e) => {
@@ -355,8 +374,13 @@
       }
     });
 
-    // FUNCIÓN PARA GUARDAR O RE-SUMAR TEMA
+    // FUNCIÓN PARA SUMAR A LA COLA FIESTA Y GUARDAR EN MI PLAYLIST
     function addSongToQueue(videoId) {
+      if (!currentUser) {
+        nameModal.classList.remove('hidden');
+        return;
+      }
+
       push(playlistRef, {
         videoId: videoId,
         requestedBy: currentUser,
@@ -371,37 +395,21 @@
       });
     }
 
-    // AGREGAR CANCIÓN DESDE EL BUSCADOR
+    // FORMULARIO (Si pegan un link directo o presionan ENTER)
     document.getElementById('song-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const query = searchInput.value.trim();
 
-      if (!currentUser) {
-        nameModal.classList.remove('hidden');
-        return;
-      }
-
       let videoId = extractVideoID(query);
 
-      if (!videoId) {
-        try {
-          const searchRes = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${encodeURIComponent(query)}`);
-          const searchData = await searchRes.json();
-          if (searchData.url) {
-            videoId = extractVideoID(searchData.url);
-          }
-        } catch (err) {}
+      if (videoId) {
+        addSongToQueue(videoId);
+        searchInput.value = '';
+        suggestionsList.classList.add('hidden');
+      } else {
+        // Si hicieron submit escribiendo texto, ejecuta la búsqueda
+        searchYouTubeAPI(query);
       }
-
-      if (!videoId) {
-        alert("Pega un enlace directo de YouTube para agregar la canción.");
-        return;
-      }
-
-      addSongToQueue(videoId);
-
-      searchInput.value = '';
-      suggestionsList.classList.add('hidden');
     });
 
     // ESCUCHAR PLAYLIST PERSONAL DEL USUARIO
