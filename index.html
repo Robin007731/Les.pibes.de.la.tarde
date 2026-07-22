@@ -41,7 +41,7 @@
           type="submit" 
           class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl transition duration-200 shadow-lg text-sm uppercase tracking-wider"
         >
-          Entrar a la Playlist 🔥
+          Entrar a la Playlist 
         </button>
       </form>
     </div>
@@ -118,7 +118,7 @@
           
           <div class="flex items-center gap-2 mb-4 border-b border-slate-700/50 pb-2">
             <button id="tab-queue" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-amber-500 text-slate-950 transition">
-              Cola Fiesta 🔥 (<span id="queue-count">0</span>)
+              fila principal  (<span id="queue-count">0</span>)
             </button>
             <button id="tab-my-list" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">
               Mi Playlist 🎵
@@ -459,7 +459,7 @@
 
           li.querySelector('.add-again-btn').addEventListener('click', () => {
             addSongToQueue(song.videoId);
-            alert(`¡"${song.title}" sumada a la cola de la fiesta! 🔥`);
+            alert(`¡"${song.title}" sumada a la fila principal! 🔥`);
           });
 
           myContainer.appendChild(li);
