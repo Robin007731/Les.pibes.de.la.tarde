@@ -153,8 +153,8 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // 🔑 PEGA AQUÍ TU API KEY DE GOOGLE / YOUTUBE DATA API V3
-    const YOUTUBE_API_KEY = AIzaSyDcsSE-tef4Bs_4W7fuo-tBf1IDEkcLSmA;
+    // 🔑 API KEY DE YOUTUBE DATA API V3
+    const YOUTUBE_API_KEY = "AIzaSyDcsSE-tef4Bs_4W7fuo-tBf1IDEkcLSmA";
 
     // Configuración de tu Firebase
     const firebaseConfig = {
@@ -362,7 +362,6 @@
         return;
       }
 
-      // Espera 350ms después de que el usuario deja de escribir para no gastar cuota extra
       debounceTimer = setTimeout(() => {
         searchYouTubeAPI(query);
       }, 350);
@@ -407,7 +406,6 @@
         searchInput.value = '';
         suggestionsList.classList.add('hidden');
       } else {
-        // Si hicieron submit escribiendo texto, ejecuta la búsqueda
         searchYouTubeAPI(query);
       }
     });
