@@ -181,7 +181,6 @@
     const db = getDatabase(app);
     const auth = getAuth(app);
     
-    // Configurar persistencia local para evitar errores de almacenamiento de sesión
     setPersistence(auth, browserLocalPersistence).catch((err) => {
       console.error("Error configurando la persistencia de auth:", err);
     });
@@ -231,7 +230,6 @@
     const userAvatar = document.getElementById('user-avatar');
     const logoutBtn = document.getElementById('logout-btn');
 
-    // Usar Popup controlado mediante acción directa del usuario evita el error de redirección
     googleLoginBtn.addEventListener('click', async () => {
       try {
         await signInWithPopup(auth, provider);
@@ -419,6 +417,21 @@
       });
     }
 
+    // FUNCIÓN PARA REPRODUCIR UNA CANCIÓN DE LA COLA INMEDIATAMENTE
+    function playSongNow(song) {
+      if (!player || !player.loadVideoById) return;
+
+      currentSongKey = song.key;
+      isPlaying = true;
+      isFallbackActive = false;
+
+      player.loadVideoById(song.videoId);
+      
+      document.getElementById('current-song-title').innerText = song.title;
+      document.getElementById('current-song-user').innerText = song.requestedBy;
+      document.getElementById('now-playing-info').classList.remove('hidden');
+    }
+
     document.getElementById('song-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const query = searchInput.value.trim();
@@ -520,34 +533,35 @@
 
       playlistData.forEach((song, index) => {
         const li = document.createElement('li');
-        li.className = "flex items-center gap-3 bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/60 shadow-md hover:border-slate-600 transition";
+        li.className = "flex items-center justify-between gap-3 bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/60 shadow-md hover:border-slate-600 transition";
         li.innerHTML = `
-          <div class="relative flex-shrink-0">
-            <img src="${song.thumbnail}" alt="thumbnail" class="w-16 h-12 object-cover rounded-lg border border-slate-800" />
-            <span class="absolute -top-2 -left-2 bg-amber-500 text-slate-950 font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border border-slate-900 shadow">
-              ${index + 1}
-            </span>
+          <div class="flex items-center gap-3 overflow-hidden flex-1">
+            <div class="relative flex-shrink-0">
+              <img src="${song.thumbnail}" alt="thumbnail" class="w-16 h-12 object-cover rounded-lg border border-slate-800" />
+              <span class="absolute -top-2 -left-2 bg-amber-500 text-slate-950 font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border border-slate-900 shadow">
+                ${index + 1}
+              </span>
+            </div>
+            <div class="overflow-hidden min-w-0">
+              <p class="font-bold text-slate-200 text-xs truncate leading-snug" title="${song.title}">${song.title}</p>
+              <p class="text-[11px] text-slate-400 truncate mt-0.5">${song.author}</p>
+              <p class="text-[10px] text-amber-400 font-medium mt-0.5 truncate">🔥 Pedido por: <span class="text-slate-300 font-semibold">${song.requestedBy}</span></p>
+            </div>
           </div>
-          <div class="overflow-hidden flex-1 min-w-0">
-            <p class="font-bold text-slate-200 text-xs truncate leading-snug" title="${song.title}">${song.title}</p>
-            <p class="text-[11px] text-slate-400 truncate mt-0.5">${song.author}</p>
-            <p class="text-[10px] text-amber-400 font-medium mt-0.5 truncate">🔥 Pedido por: <span class="text-slate-300 font-semibold">${song.requestedBy}</span></p>
-          </div>
+          <button class="play-now-btn bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs w-8 h-8 rounded-full flex items-center justify-center shadow transition flex-shrink-0" title="Reproducir ahora">
+            ▶
+          </button>
         `;
+
+        li.querySelector('.play-now-btn').addEventListener('click', () => {
+          playSongNow(song);
+        });
+
         container.appendChild(li);
       });
 
       if (playlistData.length > 0 && (!isPlaying || isFallbackActive) && player && player.loadVideoById) {
-        const nextSong = playlistData[0];
-        currentSongKey = nextSong.key;
-        isPlaying = true;
-        isFallbackActive = false;
-
-        player.loadVideoById(nextSong.videoId);
-        
-        document.getElementById('current-song-title').innerText = nextSong.title;
-        document.getElementById('current-song-user').innerText = nextSong.requestedBy;
-        document.getElementById('now-playing-info').classList.remove('hidden');
+        playSongNow(playlistData[0]);
       }
     });
   </script>
