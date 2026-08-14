@@ -3,178 +3,237 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Los de la tarde 🔥 - Jukebox Colaborativo</title>
+  <title>Los de la tarde — Jukebox Colaborativo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
+    :root {
+      --accent: #f59e0b;
+      --accent-hover: #d97706;
+      --surface: #1e293b;
+      --surface-elevated: #334155;
+      --border: #475569;
+    }
     body {
-      background-color: #0f172a;
-      color: #f8fafc;
-      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(160deg, #0b1120 0%, #0f172a 50%, #111827 100%);
+      color: #f1f5f9;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     @keyframes toast-in {
-      from { opacity: 0; transform: translateY(12px); }
+      from { opacity: 0; transform: translateY(8px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    .toast { animation: toast-in 0.25s ease-out; }
+    .toast { animation: toast-in 0.2s ease-out; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
+      font-size: 0.75rem; font-weight: 600; line-height: 1;
+      padding: 0.5rem 0.875rem; border-radius: 0.5rem;
+      transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: #cbd5e1; }
+    .btn-ghost:hover { background: var(--surface-elevated); color: #fff; }
+    .btn-primary { background: var(--accent); border: 1px solid var(--accent); color: #0f172a; }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .btn-danger { background: transparent; border: 1px solid #7f1d1d; color: #fca5a5; }
+    .btn-danger:hover { background: #7f1d1d33; }
+    .btn-icon { padding: 0.5rem; min-width: 2.25rem; min-height: 2.25rem; }
+    .tab-btn { flex: 1; padding: 0.625rem 0.75rem; font-size: 0.75rem; font-weight: 600; border-radius: 0.5rem; transition: all 0.15s; }
+    .tab-btn-active { background: var(--accent); color: #0f172a; }
+    .tab-btn-inactive { background: transparent; color: #94a3b8; }
+    .tab-btn-inactive:hover { color: #e2e8f0; background: #33415544; }
+    .card { background: #1e293bcc; border: 1px solid #334155; border-radius: 0.875rem; }
+    .input-field {
+      background: #0f172a; border: 1px solid #334155; border-radius: 0.5rem;
+      padding: 0.625rem 0.875rem; font-size: 0.875rem; color: #f1f5f9;
+      transition: border-color 0.15s;
+    }
+    .input-field:focus { outline: none; border-color: var(--accent); }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between p-4 max-w-7xl mx-auto">
+<body class="min-h-screen flex flex-col p-4 sm:p-6 max-w-7xl mx-auto">
 
-  <!-- TOAST -->
   <div id="toast-container" class="fixed bottom-6 right-4 z-[60] flex flex-col gap-2 pointer-events-none"></div>
 
-  <!-- MODAL AUTH -->
-  <div id="auth-modal" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl max-w-md w-full text-center shadow-2xl flex flex-col items-center">
-      <div class="text-5xl mb-3 animate-bounce">🔥</div>
-      <h2 class="text-2xl font-black text-amber-500 mb-2">Los de la tarde</h2>
-      <p class="text-slate-400 text-sm mb-6">Inicia sesión con Google o entra como invitado para pedir temas y votar.</p>
+  <!-- AUTH MODAL -->
+  <div id="auth-modal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="card p-8 max-w-md w-full shadow-2xl">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center">
+          <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-white">Los de la tarde</h2>
+          <p class="text-xs text-slate-400">Jukebox colaborativo</p>
+        </div>
+      </div>
+      <p class="text-sm text-slate-400 mb-6">Iniciá sesión para pedir temas, votar y guardar tu biblioteca personal.</p>
 
-      <button id="google-login-btn" class="w-full bg-white hover:bg-slate-100 text-slate-900 font-bold py-3 px-4 rounded-xl transition shadow-lg text-sm flex items-center justify-center gap-3 mb-4">
+      <button id="google-login-btn" class="w-full bg-white hover:bg-slate-100 text-slate-900 font-semibold py-3 px-4 rounded-lg transition text-sm flex items-center justify-center gap-3 mb-5">
         <svg class="w-5 h-5" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
         </svg>
-        Entrar con Google
+        Continuar con Google
       </button>
 
-      <div class="w-full border-t border-slate-700 pt-4">
-        <p class="text-xs text-slate-400 mb-3">O entrá como invitado con tu nombre:</p>
-        <input id="guest-name-input" type="text" maxlength="24" placeholder="Tu nombre (ej: Robin)"
-          class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 mb-3"/>
-        <button id="guest-login-btn" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-2.5 px-4 rounded-xl transition text-sm border border-slate-600">
-          👤 Continuar como Invitado
-        </button>
+      <div class="border-t border-slate-700 pt-5">
+        <label for="guest-name-input" class="block text-xs font-medium text-slate-400 mb-2">Entrar como invitado</label>
+        <input id="guest-name-input" type="text" maxlength="24" placeholder="Tu nombre"
+          class="input-field w-full mb-3"/>
+        <button id="guest-login-btn" class="btn btn-ghost w-full py-2.5">Continuar como invitado</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL QR -->
-  <div id="qr-modal" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
-    <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl max-w-sm w-full text-center shadow-2xl flex flex-col items-center relative">
-      <button id="close-qr-btn" class="absolute top-3 right-3 text-slate-400 hover:text-white font-bold text-lg">✕</button>
-      <h3 class="text-lg font-bold text-amber-500 mb-1">¡Súmate al Reproductor!</h3>
-      <p class="text-xs text-slate-400 mb-4">Escaneá el QR desde tu celular para pedir o votar temas.</p>
-      <div id="qrcode" class="p-3 bg-white rounded-xl shadow-lg mb-2"></div>
+  <!-- QR MODAL -->
+  <div id="qr-modal" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
+    <div class="card p-6 max-w-sm w-full text-center relative">
+      <button id="close-qr-btn" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      <h3 class="text-base font-semibold text-white mb-1">Unirse desde el celular</h3>
+      <p class="text-xs text-slate-400 mb-5">Escaneá el código para pedir y votar temas.</p>
+      <div id="qrcode" class="inline-block p-3 bg-white rounded-lg"></div>
     </div>
   </div>
 
-  <div>
-    <header class="flex items-center justify-between pb-4 border-b border-slate-800 mb-6 gap-4 flex-wrap sm:flex-nowrap">
-      <div class="flex items-center gap-2">
-        <span class="text-2xl">🔥</span>
-        <h1 class="text-xl font-black text-amber-500 hidden sm:block">Los de la tarde</h1>
-      </div>
-
-      <div class="flex-1 max-w-2xl relative w-full order-3 sm:order-2">
-        <form id="song-form" class="relative flex items-center">
-          <input type="text" id="search-input" placeholder="Busca en YouTube o pega un link..."
-            autocomplete="off" required
-            class="w-full bg-slate-900 border border-slate-700 rounded-full pl-5 pr-28 py-2.5 text-sm focus:outline-none focus:border-amber-500 text-white shadow-inner"/>
-          <button type="submit"
-            class="absolute right-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-1.5 rounded-full text-xs transition flex items-center gap-1 shadow-md">
-            <span>🔍</span> <span class="hidden sm:inline">Buscar</span>
-          </button>
-        </form>
-        <ul id="suggestions-list" class="absolute z-40 left-0 right-0 bg-slate-900 border border-slate-700 rounded-2xl mt-2 max-h-80 overflow-y-auto hidden shadow-2xl divide-y divide-slate-800/80"></ul>
-      </div>
-
-      <div id="user-profile" class="flex items-center gap-2 order-2 sm:order-3">
-        <button id="show-qr-btn" title="Mostrar QR" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-xl border border-slate-700 text-xs text-amber-400 transition flex items-center gap-1 font-bold">
-          📱 <span class="hidden md:inline">Unir Celular</span>
-        </button>
-        <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
-          <img id="user-avatar" src="" class="w-6 h-6 rounded-full border border-slate-600 hidden" alt="Avatar"/>
-          <span id="current-user-display" class="text-xs font-medium text-slate-200">Invitado</span>
+  <!-- HEADER -->
+  <header class="mb-6">
+    <div class="flex items-center justify-between gap-4 mb-5">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
         </div>
-        <button id="auth-action-btn" title="Cambiar cuenta" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600 p-2 rounded-xl transition">🔑</button>
-      </div>
-    </header>
-
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-      <div class="lg:col-span-7 xl:col-span-8 flex flex-col gap-4">
-        <section class="bg-slate-800/80 p-4 rounded-2xl shadow-xl border border-slate-700/80">
-          <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-            <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <span id="live-dot" class="w-2 h-2 rounded-full bg-slate-600"></span>
-              <span id="player-label">Reproductor</span>
-            </h2>
-            <label class="flex items-center gap-2 cursor-pointer bg-slate-900 px-3 py-1 rounded-full border border-slate-700">
-              <input type="checkbox" id="host-mode-toggle" class="sr-only peer">
-              <div class="w-7 h-4 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-amber-500 relative"></div>
-              <span class="text-[11px] font-bold text-slate-300">Modo Parlante Principal</span>
-            </label>
-          </div>
-
-          <div id="player-wrapper" class="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-900 flex items-center justify-center">
-            <div id="player"></div>
-            <div id="listener-overlay" class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center text-center p-6 hidden">
-              <span class="text-4xl mb-3">🎧</span>
-              <p class="text-sm text-slate-300 font-semibold">Modo control remoto</p>
-              <p class="text-xs text-slate-500 mt-1">El audio suena en el parlante principal. Acá podés pedir y votar temas.</p>
-            </div>
-          </div>
-
-          <div id="now-playing-info" class="mt-4 p-3 bg-slate-900/60 rounded-xl border border-slate-800 hidden flex items-center justify-between gap-3">
-            <div class="min-w-0 flex-1">
-              <span class="text-xs text-slate-400 block uppercase tracking-wider">Sonando ahora</span>
-              <strong id="current-song-title" class="text-amber-400 text-sm md:text-base font-bold truncate block">--</strong>
-              <span class="text-xs text-slate-400 mt-0.5 block">Pedido por: <span id="current-song-user" class="text-slate-200 font-semibold">--</span></span>
-            </div>
-            <button id="skip-btn" class="hidden bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 font-bold px-3 py-1.5 rounded-xl text-xs transition flex items-center gap-1 shadow">
-              ⏭️ Saltar
-            </button>
-          </div>
-        </section>
+        <div class="min-w-0">
+          <h1 class="text-lg font-bold text-white truncate">Los de la tarde</h1>
+          <p class="text-[11px] text-slate-500 hidden sm:block">Jukebox colaborativo de oficina</p>
+        </div>
       </div>
 
-      <div class="lg:col-span-5 xl:col-span-4">
-        <section class="bg-slate-800/80 p-4 rounded-2xl shadow-xl border border-slate-700/80 h-full flex flex-col">
-          <div class="flex items-center gap-2 mb-2 border-b border-slate-700/50 pb-2">
-            <button id="tab-queue" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-amber-500 text-slate-950 transition">
-              Cola 🔥 (<span id="queue-count">0</span>/<span id="queue-max">15</span>)
-            </button>
-            <button id="tab-my-list" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">
-              Mi Playlist 🎵
-            </button>
-          </div>
-          <p id="queue-status" class="text-[10px] text-slate-500 text-center mb-3"></p>
-
-          <div id="content-queue" class="flex-1 flex flex-col">
-            <ul id="playlist-container" class="space-y-3 overflow-y-auto max-h-[480px] pr-1 no-scrollbar flex-1">
-              <li class="text-xs text-slate-500 text-center py-12">No hay canciones en la lista aún...</li>
-            </ul>
-          </div>
-
-          <div id="content-my-list" class="flex-1 flex-col hidden">
-            <p class="text-[11px] text-slate-400 mb-3 text-center">Tus temas favoritos. Tocá <strong>+</strong> para volver a sumarlos.</p>
-            <ul id="my-playlist-container" class="space-y-3 overflow-y-auto max-h-[450px] pr-1 no-scrollbar flex-1">
-              <li class="text-xs text-slate-500 text-center py-12">Aún no agregaste canciones.</li>
-            </ul>
-          </div>
-        </section>
+      <div id="user-profile" class="flex items-center gap-2 flex-shrink-0">
+        <button id="show-qr-btn" class="btn btn-ghost hidden sm:inline-flex">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+          Código QR
+        </button>
+        <button id="show-qr-btn-mobile" class="btn btn-ghost btn-icon sm:hidden" title="Código QR">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+        </button>
+        <div class="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
+          <img id="user-avatar" src="" class="w-6 h-6 rounded-full border border-slate-600 hidden" alt=""/>
+          <span id="current-user-display" class="text-xs font-medium text-slate-300 max-w-[100px] truncate">Invitado</span>
+        </div>
+        <button id="auth-action-btn" class="btn btn-ghost btn-icon" title="Cuenta">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        </button>
       </div>
     </div>
-  </div>
 
-  <footer class="mt-8 pt-4 border-t border-slate-800/80 text-center flex flex-col items-center justify-center gap-1 text-slate-500 text-xs">
-    <p>© <span id="current-year"></span> <strong>Los de la tarde 🔥</strong>. Todos los derechos reservados.</p>
-    <p class="tracking-wide">
-      Diseñado por <span class="font-bold text-amber-500">Nexus Studios</span> <span class="text-slate-600">•</span> Creado por <span class="font-semibold text-slate-300">Robinson Chagas</span>
-    </p>
+    <!-- Search bar -->
+    <form id="song-form" class="flex gap-2">
+      <div class="relative flex-1">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="text" id="search-input" placeholder="Buscar en YouTube o pegar un enlace..."
+          autocomplete="off" required
+          class="input-field w-full pl-10"/>
+        <ul id="suggestions-list" class="absolute z-40 left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-lg max-h-72 overflow-y-auto hidden shadow-xl divide-y divide-slate-800"></ul>
+      </div>
+      <button type="submit" class="btn btn-primary px-5">Buscar</button>
+    </form>
+  </header>
+
+  <main class="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1">
+
+    <!-- Player -->
+    <div class="lg:col-span-7 xl:col-span-8">
+      <section class="card p-5">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div class="flex items-center gap-2">
+            <span id="live-dot" class="w-2 h-2 rounded-full bg-slate-600"></span>
+            <h2 id="player-label" class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Reproductor</h2>
+          </div>
+          <label class="flex items-center gap-2.5 cursor-pointer select-none">
+            <span class="text-xs font-medium text-slate-400">Parlante principal</span>
+            <div class="relative">
+              <input type="checkbox" id="host-mode-toggle" class="sr-only peer"/>
+              <div class="w-9 h-5 bg-slate-700 rounded-full peer-checked:bg-amber-500 transition-colors"></div>
+              <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+            </div>
+          </label>
+        </div>
+
+        <div id="player-wrapper" class="relative w-full aspect-video bg-black rounded-lg overflow-hidden border border-slate-800">
+          <div id="player"></div>
+          <div id="listener-overlay" class="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center text-center p-8 hidden">
+            <div class="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center mb-4">
+              <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            </div>
+            <p class="text-sm font-medium text-slate-200">Modo control remoto</p>
+            <p class="text-xs text-slate-500 mt-1 max-w-xs">El audio se reproduce en el parlante principal. Desde acá podés pedir y votar temas.</p>
+          </div>
+        </div>
+
+        <div id="now-playing-info" class="mt-4 p-4 bg-slate-900/50 rounded-lg border border-slate-800 hidden">
+          <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0 flex-1">
+              <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Reproduciendo</p>
+              <p id="current-song-title" class="text-sm font-semibold text-white truncate">--</p>
+              <p class="text-xs text-slate-400 mt-0.5">Solicitado por <span id="current-song-user" class="text-slate-300">--</span></p>
+            </div>
+            <button id="skip-btn" class="btn btn-ghost hidden flex-shrink-0">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+              Siguiente
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Queue -->
+    <div class="lg:col-span-5 xl:col-span-4">
+      <section class="card p-5 h-full flex flex-col">
+        <div class="flex items-center justify-between mb-1">
+          <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Biblioteca</h2>
+          <span class="text-[10px] text-slate-500"><span id="queue-count">0</span> / <span id="queue-max">15</span> en cola</span>
+        </div>
+
+        <div class="flex gap-1 p-1 bg-slate-900/60 rounded-lg mb-3 mt-2">
+          <button id="tab-queue" class="tab-btn tab-btn-active">Cola de reproducción</button>
+          <button id="tab-my-list" class="tab-btn tab-btn-inactive">Mi biblioteca</button>
+        </div>
+
+        <p id="queue-status" class="text-[10px] text-slate-500 mb-3"></p>
+
+        <div id="content-queue" class="flex-1 flex flex-col min-h-0">
+          <ul id="playlist-container" class="space-y-2 overflow-y-auto max-h-[480px] pr-1 no-scrollbar flex-1">
+            <li class="text-xs text-slate-500 text-center py-16">La cola está vacía</li>
+          </ul>
+        </div>
+
+        <div id="content-my-list" class="flex-1 flex-col hidden min-h-0">
+          <p class="text-[11px] text-slate-500 mb-3">Tus temas guardados. Usá el botón para volver a agregarlos a la cola.</p>
+          <ul id="my-playlist-container" class="space-y-2 overflow-y-auto max-h-[450px] pr-1 no-scrollbar flex-1">
+            <li class="text-xs text-slate-500 text-center py-16">Sin canciones guardadas</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="mt-8 pt-5 border-t border-slate-800 text-center text-slate-600 text-[11px]">
+    <p>&copy; <span id="current-year"></span> Los de la tarde &middot; Nexus Studios &middot; Robinson Chagas</p>
   </footer>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, push, onValue, remove, set, runTransaction, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, push, onValue, remove, set, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, browserLocalPersistence, setPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+    const APP_URL = 'https://turno-tarde-musica.vercel.app';
     const MAX_QUEUE_SIZE = 15;
     const MAX_SONGS_PER_USER = 2;
     const ADD_COOLDOWN_MS = 120000;
@@ -201,22 +260,43 @@
     const nowPlayingRef = ref(db, 'nowPlaying');
 
     const fallbackSongs = [
-      { videoId: "5qap5aO4i9A", title: "Lofi Hip Hop Beats", requestedBy: "Radio Los de la tarde 🔥" },
-      { videoId: "3tmd-ClpJxA", title: "Cumbia / Fiesta Hits", requestedBy: "Modo Fiesta 🔥" },
-      { videoId: "kJQP7kiw5Fk", title: "Despacito - Luis Fonsi", requestedBy: "Auto-DJ 🔥" }
+      { videoId: "5qap5aO4i9A", title: "Lofi Hip Hop Beats", requestedBy: "Radio automática" },
+      { videoId: "3tmd-ClpJxA", title: "Cumbia / Fiesta Hits", requestedBy: "Modo aleatorio" },
+      { videoId: "kJQP7kiw5Fk", title: "Despacito - Luis Fonsi", requestedBy: "Auto-DJ" }
     ];
 
-    let player;
-    let currentSongKey = null;
-    let isPlaying = false;
-    let playlistData = [];
-    let isFallbackActive = false;
-    let currentUser = null;
-    let isGuestMode = false;
-    let guestProfile = null;
-    let isHostMode = false;
-    let lastAddTime = 0;
-    let qrGenerated = false;
+    let player, currentSongKey = null, isPlaying = false, playlistData = [];
+    let isFallbackActive = false, currentUser = null, isGuestMode = false;
+    let guestProfile = null, isHostMode = false, lastAddTime = 0, qrGenerated = false;
+    let autopilotContext = null;
+    let recentAutoplayIds = [];
+    let isAutopilotLoading = false;
+    const videoMetaCache = {};
+
+    const GENRE_PATTERNS = [
+      { genre: 'plena', keywords: ['plena', 'plenero', 'pleneros'] },
+      { genre: 'cumbia', keywords: ['cumbia', 'cumbiero', 'cumbia villera'] },
+      { genre: 'reggaeton', keywords: ['reggaeton', 'reguetón', 'regueton', 'perreo', 'dembow'] },
+      { genre: 'salsa', keywords: ['salsa', 'son cubano', 'timba'] },
+      { genre: 'bachata', keywords: ['bachata'] },
+      { genre: 'merengue', keywords: ['merengue'] },
+      { genre: 'cuarteto', keywords: ['cuarteto', 'cordobes', 'córdoba'] },
+      { genre: 'rock', keywords: ['rock', 'metal', 'punk', 'grunge', 'indie'] },
+      { genre: 'pop', keywords: ['pop', 'k-pop', 'j-pop'] },
+      { genre: 'trap', keywords: ['trap', 'drill', 'urbano'] },
+      { genre: 'hip hop', keywords: ['hip hop', 'hip-hop', 'rap'] },
+      { genre: 'lofi', keywords: ['lofi', 'lo-fi', 'chill beats', 'study beats'] },
+      { genre: 'electronic', keywords: ['electronic', 'edm', 'house', 'techno', 'electro'] },
+      { genre: 'tango', keywords: ['tango', 'milonga', 'candombe'] },
+      { genre: 'folklore', keywords: ['folklore', 'folclore', 'zamba', 'chacarera', 'carnavalito'] },
+      { genre: 'vallenato', keywords: ['vallenato'] },
+      { genre: 'ranchera', keywords: ['ranchera', 'mariachi', 'corrido'] },
+      { genre: 'jazz', keywords: ['jazz', 'blues', 'swing'] },
+      { genre: 'classical', keywords: ['classical', 'clásica', 'sinfonia', 'orquesta'] },
+    ];
+
+    const TAB_ACTIVE = "tab-btn tab-btn-active";
+    const TAB_INACTIVE = "tab-btn tab-btn-inactive";
 
     document.getElementById('current-year').innerText = new Date().getFullYear();
     document.getElementById('queue-max').innerText = MAX_QUEUE_SIZE;
@@ -228,40 +308,24 @@
     }
 
     function showToast(msg, type = 'info') {
-      const colors = { info: 'bg-slate-800 border-slate-600', success: 'bg-emerald-900/90 border-emerald-600', error: 'bg-red-900/90 border-red-600' };
+      const colors = { info: 'bg-slate-800 border-slate-600', success: 'bg-emerald-950 border-emerald-700', error: 'bg-red-950 border-red-800' };
       const el = document.createElement('div');
-      el.className = `toast pointer-events-auto px-4 py-2.5 rounded-xl border text-xs font-medium text-white shadow-xl ${colors[type] || colors.info}`;
+      el.className = `toast pointer-events-auto px-4 py-2.5 rounded-lg border text-xs text-slate-200 shadow-xl ${colors[type] || colors.info}`;
       el.textContent = msg;
       document.getElementById('toast-container').appendChild(el);
       setTimeout(() => el.remove(), 3200);
     }
 
-    function getUserId() {
-      if (currentUser) return currentUser.uid;
-      if (guestProfile) return guestProfile.id;
-      return null;
-    }
-
-    function getUserName() {
-      if (currentUser) return currentUser.displayName || 'Usuario';
-      if (guestProfile) return guestProfile.name;
-      return 'Invitado';
-    }
-
-    function isLoggedIn() {
-      return !!(currentUser || guestProfile);
-    }
+    function getUserId() { return currentUser?.uid || guestProfile?.id || null; }
+    function getUserName() { return currentUser?.displayName || guestProfile?.name || 'Invitado'; }
+    function isLoggedIn() { return !!(currentUser || guestProfile); }
 
     function loadGuestProfile() {
-      try {
-        const saved = localStorage.getItem('jukebox_guest');
-        return saved ? JSON.parse(saved) : null;
-      } catch { return null; }
+      try { return JSON.parse(localStorage.getItem('jukebox_guest') || 'null'); } catch { return null; }
     }
 
     function saveGuestProfile(name) {
-      const id = 'guest_' + Math.random().toString(36).slice(2, 10);
-      guestProfile = { id, name: name.trim().slice(0, 24) };
+      guestProfile = { id: 'guest_' + Math.random().toString(36).slice(2, 10), name: name.trim().slice(0, 24) };
       localStorage.setItem('jukebox_guest', JSON.stringify(guestProfile));
       return guestProfile;
     }
@@ -275,17 +339,12 @@
     function updateUserUI() {
       const display = document.getElementById('current-user-display');
       const avatar = document.getElementById('user-avatar');
-
       if (currentUser) {
         display.textContent = currentUser.displayName;
-        if (currentUser.photoURL) {
-          avatar.src = currentUser.photoURL;
-          avatar.classList.remove('hidden');
-        } else {
-          avatar.classList.add('hidden');
-        }
+        if (currentUser.photoURL) { avatar.src = currentUser.photoURL; avatar.classList.remove('hidden'); }
+        else avatar.classList.add('hidden');
       } else if (guestProfile) {
-        display.textContent = guestProfile.name + ' 👤';
+        display.textContent = guestProfile.name;
         avatar.classList.add('hidden');
       } else {
         display.textContent = 'Invitado';
@@ -298,64 +357,58 @@
       const skipBtn = document.getElementById('skip-btn');
       const liveDot = document.getElementById('live-dot');
       const label = document.getElementById('player-label');
-
       if (isHostMode) {
         overlay.classList.add('hidden');
         skipBtn.classList.remove('hidden');
-        liveDot.className = 'w-2 h-2 rounded-full bg-red-500 animate-ping';
-        label.textContent = 'Reproductor Parlante';
+        liveDot.className = 'w-2 h-2 rounded-full bg-red-500';
+        label.textContent = 'Parlante activo';
       } else {
         overlay.classList.remove('hidden');
         skipBtn.classList.add('hidden');
         liveDot.className = 'w-2 h-2 rounded-full bg-slate-600';
-        label.textContent = 'Control Remoto';
+        label.textContent = 'Control remoto';
       }
     }
 
-    // Tabs
     const tabQueue = document.getElementById('tab-queue');
     const tabMyList = document.getElementById('tab-my-list');
     const contentQueue = document.getElementById('content-queue');
     const contentMyList = document.getElementById('content-my-list');
 
     tabQueue.addEventListener('click', () => {
-      tabQueue.className = "flex-1 py-1.5 text-xs font-bold rounded-lg bg-amber-500 text-slate-950 transition";
-      tabMyList.className = "flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition";
+      tabQueue.className = TAB_ACTIVE;
+      tabMyList.className = TAB_INACTIVE;
       contentQueue.classList.replace('hidden', 'flex');
       contentMyList.classList.add('hidden');
       contentMyList.classList.remove('flex');
     });
 
     tabMyList.addEventListener('click', () => {
-      tabMyList.className = "flex-1 py-1.5 text-xs font-bold rounded-lg bg-amber-500 text-slate-950 transition";
-      tabQueue.className = "flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition";
+      tabMyList.className = TAB_ACTIVE;
+      tabQueue.className = TAB_INACTIVE;
       contentMyList.classList.replace('hidden', 'flex');
       contentQueue.classList.add('hidden');
       contentQueue.classList.remove('flex');
     });
 
-    // QR
     const qrModal = document.getElementById('qr-modal');
-    document.getElementById('show-qr-btn').addEventListener('click', () => {
+    function openQrModal() {
       qrModal.classList.remove('hidden');
       if (!qrGenerated) {
-        new QRCode(document.getElementById('qrcode'), { text: window.location.href, width: 180, height: 180 });
+        new QRCode(document.getElementById('qrcode'), { text: APP_URL, width: 180, height: 180 });
         qrGenerated = true;
       }
-    });
+    }
+    document.getElementById('show-qr-btn').addEventListener('click', openQrModal);
+    document.getElementById('show-qr-btn-mobile').addEventListener('click', openQrModal);
     document.getElementById('close-qr-btn').addEventListener('click', () => qrModal.classList.add('hidden'));
 
-    // Host mode
     document.getElementById('host-mode-toggle').addEventListener('change', (e) => {
       isHostMode = e.target.checked;
       localStorage.setItem('jukebox_host_mode', isHostMode ? '1' : '0');
       updateHostUI();
-      if (isHostMode && playlistData.length > 0 && !isPlaying) {
-        playSongNow(playlistData[0]);
-      } else if (!isHostMode && player && player.stopVideo) {
-        player.stopVideo();
-        isPlaying = false;
-      }
+      if (isHostMode && playlistData.length > 0 && !isPlaying) playSongNow(playlistData[0]);
+      else if (!isHostMode && player?.stopVideo) { player.stopVideo(); isPlaying = false; }
     });
 
     if (localStorage.getItem('jukebox_host_mode') === '1') {
@@ -364,76 +417,50 @@
       updateHostUI();
     }
 
-    // Auth
     const authModal = document.getElementById('auth-modal');
 
     document.getElementById('google-login-btn').addEventListener('click', async () => {
-      try {
-        isGuestMode = false;
-        clearGuestProfile();
-        await signInWithPopup(auth, provider);
-      } catch (error) {
-        showToast('No se pudo iniciar sesión. Revisá pop-ups bloqueados.', 'error');
-      }
+      try { isGuestMode = false; clearGuestProfile(); await signInWithPopup(auth, provider); }
+      catch { showToast('No se pudo iniciar sesión. Revisá los pop-ups bloqueados.', 'error'); }
     });
 
     document.getElementById('guest-login-btn').addEventListener('click', () => {
       const name = document.getElementById('guest-name-input').value.trim();
-      if (name.length < 2) {
-        showToast('Escribí tu nombre (mínimo 2 caracteres).', 'error');
-        return;
-      }
+      if (name.length < 2) { showToast('Ingresá tu nombre (mínimo 2 caracteres).', 'error'); return; }
       isGuestMode = true;
       saveGuestProfile(name);
       authModal.classList.add('hidden');
       updateUserUI();
       renderGuestPlaylist();
-      showToast(`¡Bienvenido, ${name}! 🔥`, 'success');
+      showToast(`Bienvenido, ${name}.`, 'success');
     });
 
     document.getElementById('auth-action-btn').addEventListener('click', () => {
-      if (currentUser) {
-        signOut(auth);
-      } else if (guestProfile) {
-        clearGuestProfile();
-        isGuestMode = false;
+      if (currentUser) signOut(auth);
+      else if (guestProfile) {
+        clearGuestProfile(); isGuestMode = false;
         authModal.classList.remove('hidden');
         updateUserUI();
-        document.getElementById('my-playlist-container').innerHTML = '<li class="text-xs text-slate-500 text-center py-12">Iniciá sesión para guardar tu playlist.</li>';
-      } else {
-        authModal.classList.remove('hidden');
-      }
+        document.getElementById('my-playlist-container').innerHTML = '<li class="text-xs text-slate-500 text-center py-16">Iniciá sesión para guardar tu biblioteca.</li>';
+      } else authModal.classList.remove('hidden');
     });
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        currentUser = user;
-        isGuestMode = false;
-        clearGuestProfile();
-        authModal.classList.add('hidden');
-        updateUserUI();
-        listenToMyPlaylist();
+        currentUser = user; isGuestMode = false; clearGuestProfile();
+        authModal.classList.add('hidden'); updateUserUI(); listenToMyPlaylist();
       } else if (!isGuestMode && !guestProfile) {
-        currentUser = null;
-        authModal.classList.remove('hidden');
-        updateUserUI();
-        document.getElementById('my-playlist-container').innerHTML = '<li class="text-xs text-slate-500 text-center py-12">Iniciá sesión o entrá como invitado.</li>';
-      } else {
-        currentUser = null;
-        updateUserUI();
-      }
+        currentUser = null; authModal.classList.remove('hidden'); updateUserUI();
+        document.getElementById('my-playlist-container').innerHTML = '<li class="text-xs text-slate-500 text-center py-16">Iniciá sesión o entrá como invitado.</li>';
+      } else { currentUser = null; updateUserUI(); }
     });
 
     const savedGuest = loadGuestProfile();
     if (savedGuest) {
-      guestProfile = savedGuest;
-      isGuestMode = true;
-      authModal.classList.add('hidden');
-      updateUserUI();
-      renderGuestPlaylist();
+      guestProfile = savedGuest; isGuestMode = true;
+      authModal.classList.add('hidden'); updateUserUI(); renderGuestPlaylist();
     }
 
-    // YouTube Player
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     document.head.appendChild(tag);
@@ -447,17 +474,158 @@
     };
 
     function onPlayerStateChange(event) {
-      if (!isHostMode) return;
-      if (event.data === YT.PlayerState.ENDED) {
-        if (currentSongKey && !isFallbackActive) {
-          remove(ref(db, `playlist/${currentSongKey}`));
-        }
-        currentSongKey = null;
-        isPlaying = false;
-        isFallbackActive = false;
-        set(nowPlayingRef, { active: false, timestamp: Date.now() });
-        checkNextSongOrPlayRandom();
+      if (!isHostMode || event.data !== YT.PlayerState.ENDED) return;
+      if (currentSongKey && !isFallbackActive) remove(ref(db, `playlist/${currentSongKey}`));
+      currentSongKey = null; isPlaying = false; isFallbackActive = false;
+      set(nowPlayingRef, { active: false, timestamp: Date.now() });
+      checkNextSongOrPlayRandom();
+    }
+
+    function detectGenre(meta) {
+      const haystack = `${meta.title || ''} ${meta.author || ''} ${(meta.tags || []).join(' ')} ${meta.description || ''}`.toLowerCase();
+      for (const { genre, keywords } of GENRE_PATTERNS) {
+        if (keywords.some(k => haystack.includes(k))) return genre;
       }
+      return null;
+    }
+
+    function extractArtist(meta) {
+      const title = (meta.title || '').replace(/\s*\(.*?official.*?\)\s*/gi, '').trim();
+      for (const sep of [' - ', ' | ', ' – ', ' — ']) {
+        if (title.includes(sep)) {
+          const part = title.split(sep)[0].trim();
+          if (part.length >= 2 && part.length <= 80) return part;
+        }
+      }
+      const cleaned = title
+        .replace(/\s*(official|video|audio|lyrics|live|hd|4k|vevo|topic)\s*/gi, ' ')
+        .replace(/\s+/g, ' ').trim();
+      if (cleaned.length >= 2 && cleaned.length <= 60) return cleaned;
+      return meta.author || '';
+    }
+
+    function getExcludedVideoIds() {
+      const excluded = new Set(recentAutoplayIds);
+      playlistData.forEach(s => excluded.add(s.videoId));
+      if (autopilotContext?.lastVideoId) excluded.add(autopilotContext.lastVideoId);
+      return excluded;
+    }
+
+    async function youtubeSearchVideos(query, maxResults = 20) {
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=${maxResults}&q=${encodeURIComponent(query)}&type=video&videoEmbeddable=true&key=${YOUTUBE_API_KEY}`
+      );
+      const data = await res.json();
+      if (!data.items?.length) return [];
+      return data.items.map(item => ({
+        videoId: item.id.videoId,
+        title: item.snippet.title,
+        author: item.snippet.channelTitle,
+        thumbnail: item.snippet.thumbnails?.default?.url || `https://img.youtube.com/vi/${item.id.videoId}/hqdefault.jpg`
+      }));
+    }
+
+    async function findRelatedVideo(context) {
+      const excluded = getExcludedVideoIds();
+      const strategies = [];
+
+      if (context.artist) {
+        strategies.push(`${context.artist} official audio`);
+        strategies.push(`${context.artist} en vivo`);
+        strategies.push(context.artist);
+      }
+      if (context.genre) {
+        strategies.push(`${context.genre} mix`);
+        strategies.push(`${context.genre} en vivo`);
+        strategies.push(`mejores ${context.genre}`);
+        strategies.push(`${context.genre} ${context.artist || ''}`.trim());
+      }
+      if (context.author && context.author !== context.artist) {
+        strategies.push(`${context.author} music`);
+      }
+
+      for (const query of strategies) {
+        if (!query?.trim()) continue;
+        try {
+          const results = await youtubeSearchVideos(query, 20);
+          const candidates = results.filter(r => r.videoId && !excluded.has(r.videoId));
+          if (!candidates.length) continue;
+          const pick = candidates[Math.floor(Math.random() * Math.min(candidates.length, 10))];
+          const sameArtist = context.artist && (
+            pick.title.toLowerCase().includes(context.artist.toLowerCase()) ||
+            pick.author.toLowerCase().includes(context.artist.toLowerCase())
+          );
+          return {
+            ...pick,
+            reason: sameArtist ? `misma banda · ${context.artist}` : `mismo género · ${context.genre || 'similar'}`
+          };
+        } catch (err) { console.error(err); }
+      }
+      return null;
+    }
+
+    async function updateAutopilotContext(videoId, meta) {
+      const fullMeta = meta?.tags ? meta : await fetchVideoMetadata(videoId);
+      autopilotContext = {
+        lastVideoId: videoId,
+        title: fullMeta.title,
+        artist: extractArtist(fullMeta),
+        genre: detectGenre(fullMeta),
+        author: fullMeta.author
+      };
+      if (!recentAutoplayIds.includes(videoId)) recentAutoplayIds.push(videoId);
+      if (recentAutoplayIds.length > 50) recentAutoplayIds.shift();
+    }
+
+    async function playSmartAutopilot() {
+      if (!isHostMode || !player?.loadVideoById || isAutopilotLoading) return;
+      isAutopilotLoading = true;
+      try {
+        let song = autopilotContext?.lastVideoId ? await findRelatedVideo(autopilotContext) : null;
+
+        if (!song) {
+          const fb = fallbackSongs[Math.floor(Math.random() * fallbackSongs.length)];
+          if (getExcludedVideoIds().has(fb.videoId)) {
+            const alt = fallbackSongs.find(s => !getExcludedVideoIds().has(s.videoId));
+            if (alt) Object.assign(fb, alt);
+          }
+          const meta = await fetchVideoMetadata(fb.videoId);
+          await updateAutopilotContext(fb.videoId, meta);
+          song = { videoId: fb.videoId, title: meta.title, author: meta.author, reason: 'radio automática' };
+        } else {
+          await updateAutopilotContext(song.videoId, song);
+        }
+
+        isFallbackActive = true;
+        isPlaying = true;
+        currentSongKey = null;
+        player.loadVideoById(song.videoId);
+        const label = `Radio · ${song.reason}`;
+        updateNowPlayingDisplay(song.title, label);
+        document.getElementById('player-label').textContent = 'Radio inteligente';
+        set(nowPlayingRef, {
+          active: true, videoId: song.videoId, title: song.title,
+          requestedBy: label, isFallback: true, isAutopilot: true, timestamp: Date.now()
+        });
+      } catch {
+        showToast('No se pudo cargar la radio automática.', 'error');
+      } finally {
+        isAutopilotLoading = false;
+      }
+    }
+
+    async function checkNextSongOrPlayRandom() {
+      if (!isHostMode) return;
+      if (playlistData.length > 0) {
+        playSongNow(playlistData[0]);
+        return;
+      }
+      await playSmartAutopilot();
+    }
+
+    function extractVideoID(url) {
+      const m = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
+      return (m && m[2].length === 11) ? m[2] : null;
     }
 
     function updateNowPlayingDisplay(title, requestedBy) {
@@ -466,177 +634,109 @@
       document.getElementById('now-playing-info').classList.remove('hidden');
     }
 
-    function checkNextSongOrPlayRandom() {
-      if (!isHostMode) return;
-
-      if (playlistData.length > 0) {
-        playSongNow(playlistData[0]);
-        return;
-      }
-
-      if (player && player.loadVideoById) {
-        const randomSong = fallbackSongs[Math.floor(Math.random() * fallbackSongs.length)];
-        isFallbackActive = true;
-        isPlaying = true;
-        currentSongKey = null;
-        player.loadVideoById(randomSong.videoId);
-        updateNowPlayingDisplay(randomSong.title + ' (Modo Aleatorio)', randomSong.requestedBy);
-        set(nowPlayingRef, {
-          active: true, videoId: randomSong.videoId,
-          title: randomSong.title + ' (Modo Aleatorio)',
-          requestedBy: randomSong.requestedBy, isFallback: true, timestamp: Date.now()
-        });
-      }
-    }
-
-    function extractVideoID(url) {
-      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-      const match = url.match(regExp);
-      return (match && match[2].length === 11) ? match[2] : null;
+    async function fetchVideoMetadata(videoId) {
+      if (videoMetaCache[videoId]) return videoMetaCache[videoId];
+      try {
+        const res = await fetch(
+          `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${YOUTUBE_API_KEY}`
+        );
+        const data = await res.json();
+        const s = data.items?.[0]?.snippet;
+        if (s) {
+          const meta = {
+            title: s.title || 'Tema de YouTube',
+            author: s.channelTitle || 'YouTube',
+            thumbnail: s.thumbnails?.medium?.url || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+            tags: s.tags || [],
+            description: (s.description || '').slice(0, 500)
+          };
+          videoMetaCache[videoId] = meta;
+          return meta;
+        }
+      } catch { /* fallback abajo */ }
+      const basic = await fetchVideoDetails(videoId);
+      const meta = { ...basic, tags: [], description: '' };
+      videoMetaCache[videoId] = meta;
+      return meta;
     }
 
     async function fetchVideoDetails(videoId) {
       try {
-        const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
-        if (!response.ok) throw new Error();
-        const data = await response.json();
-        return {
-          title: data.title || 'Tema de YouTube',
-          author: data.author_name || 'YouTube',
-          thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
-        };
+        const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+        if (!r.ok) throw new Error();
+        const d = await r.json();
+        return { title: d.title || 'Tema de YouTube', author: d.author_name || 'YouTube', thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` };
       } catch {
-        return {
-          title: `Video ID: ${videoId}`,
-          author: 'YouTube',
-          thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
-        };
+        return { title: `Video ${videoId}`, author: 'YouTube', thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` };
       }
     }
 
-    // Search
     const searchInput = document.getElementById('search-input');
     const suggestionsList = document.getElementById('suggestions-list');
     let debounceTimer;
 
     async function searchYouTubeAPI(query) {
       try {
-        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=5&q=${encodeURIComponent(query)}&type=video&key=${YOUTUBE_API_KEY}`;
-        const res = await fetch(url);
+        const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=5&q=${encodeURIComponent(query)}&type=video&key=${YOUTUBE_API_KEY}`);
         const data = await res.json();
-
-        if (!data.items?.length) {
-          suggestionsList.classList.add('hidden');
-          return;
-        }
+        if (!data.items?.length) { suggestionsList.classList.add('hidden'); return; }
 
         suggestionsList.innerHTML = '';
         data.items.forEach((item) => {
           const videoId = item.id.videoId;
-          const title = escapeHTML(item.snippet.title);
-          const channelTitle = escapeHTML(item.snippet.channelTitle);
-          const thumbnail = item.snippet.thumbnails.default.url;
-
           const li = document.createElement('li');
-          li.className = "p-2.5 hover:bg-slate-800 cursor-pointer flex items-center gap-3 transition";
+          li.className = "p-3 hover:bg-slate-800 cursor-pointer flex items-center gap-3 transition";
           li.innerHTML = `
-            <img src="${thumbnail}" class="w-12 h-9 object-cover rounded border border-slate-700 flex-shrink-0"/>
-            <div class="overflow-hidden flex-1">
-              <p class="font-semibold text-xs text-slate-200 truncate leading-tight">${title}</p>
-              <p class="text-[10px] text-slate-400 truncate mt-0.5">${channelTitle}</p>
+            <img src="${item.snippet.thumbnails.default.url}" class="w-12 h-9 object-cover rounded border border-slate-700 flex-shrink-0"/>
+            <div class="overflow-hidden flex-1 min-w-0">
+              <p class="font-medium text-xs text-slate-200 truncate">${escapeHTML(item.snippet.title)}</p>
+              <p class="text-[10px] text-slate-500 truncate mt-0.5">${escapeHTML(item.snippet.channelTitle)}</p>
             </div>
-            <span class="bg-amber-500 text-slate-950 font-bold text-[10px] px-2.5 py-1 rounded-full shadow flex-shrink-0">+ Sumar</span>`;
-
-          li.addEventListener('click', () => {
-            addSongToQueue(videoId);
-            suggestionsList.classList.add('hidden');
-            searchInput.value = '';
-          });
+            <span class="btn btn-primary text-[10px] px-2.5 py-1 flex-shrink-0">Agregar</span>`;
+          li.addEventListener('click', () => { addSongToQueue(videoId); suggestionsList.classList.add('hidden'); searchInput.value = ''; });
           suggestionsList.appendChild(li);
         });
         suggestionsList.classList.remove('hidden');
-      } catch (err) {
-        console.error(err);
-        showToast('Error al buscar en YouTube.', 'error');
-      }
+      } catch { showToast('Error al buscar en YouTube.', 'error'); }
     }
 
     searchInput.addEventListener('input', (e) => {
       clearTimeout(debounceTimer);
-      const query = e.target.value.trim();
-      if (!query || extractVideoID(query)) {
-        suggestionsList.classList.add('hidden');
-        return;
-      }
-      debounceTimer = setTimeout(() => searchYouTubeAPI(query), 350);
+      const q = e.target.value.trim();
+      if (!q || extractVideoID(q)) { suggestionsList.classList.add('hidden'); return; }
+      debounceTimer = setTimeout(() => searchYouTubeAPI(q), 350);
     });
 
     document.addEventListener('click', (e) => {
-      if (!searchInput.contains(e.target) && !suggestionsList.contains(e.target)) {
-        suggestionsList.classList.add('hidden');
-      }
+      if (!searchInput.contains(e.target) && !suggestionsList.contains(e.target)) suggestionsList.classList.add('hidden');
     });
 
     function countUserSongsInQueue() {
       const uid = getUserId();
-      if (!uid) return 0;
-      return playlistData.filter(s => s.requestedById === uid).length;
+      return uid ? playlistData.filter(s => s.requestedById === uid).length : 0;
     }
 
-    function isDuplicateInQueue(videoId) {
-      return playlistData.some(s => s.videoId === videoId);
-    }
+    function isDuplicateInQueue(videoId) { return playlistData.some(s => s.videoId === videoId); }
 
     async function addSongToQueue(videoId) {
-      if (!isLoggedIn()) {
-        authModal.classList.remove('hidden');
-        showToast('Iniciá sesión o entrá como invitado primero.', 'error');
-        return;
-      }
-
-      if (playlistData.length >= MAX_QUEUE_SIZE) {
-        showToast(`La cola está llena (${MAX_QUEUE_SIZE} temas). Esperá a que pasen.`, 'error');
-        return;
-      }
-
-      if (isDuplicateInQueue(videoId)) {
-        showToast('Ese tema ya está en la cola.', 'error');
-        return;
-      }
-
-      if (countUserSongsInQueue() >= MAX_SONGS_PER_USER) {
-        showToast(`Solo podés tener ${MAX_SONGS_PER_USER} temas en cola a la vez.`, 'error');
-        return;
-      }
+      if (!isLoggedIn()) { authModal.classList.remove('hidden'); showToast('Iniciá sesión o entrá como invitado.', 'error'); return; }
+      if (playlistData.length >= MAX_QUEUE_SIZE) { showToast(`Cola llena (${MAX_QUEUE_SIZE} temas).`, 'error'); return; }
+      if (isDuplicateInQueue(videoId)) { showToast('Ese tema ya está en la cola.', 'error'); return; }
+      if (countUserSongsInQueue() >= MAX_SONGS_PER_USER) { showToast(`Máximo ${MAX_SONGS_PER_USER} temas por persona.`, 'error'); return; }
 
       const now = Date.now();
       if (now - lastAddTime < ADD_COOLDOWN_MS) {
-        const secs = Math.ceil((ADD_COOLDOWN_MS - (now - lastAddTime)) / 1000);
-        showToast(`Esperá ${secs}s antes de pedir otro tema.`, 'error');
-        return;
+        showToast(`Esperá ${Math.ceil((ADD_COOLDOWN_MS - (now - lastAddTime)) / 1000)}s.`, 'error'); return;
       }
 
       lastAddTime = now;
-      const uid = getUserId();
-      const name = getUserName();
+      await push(playlistRef, { videoId, requestedBy: getUserName(), requestedById: getUserId(), votes: 0, voters: {}, timestamp: Date.now() });
 
-      await push(playlistRef, {
-        videoId,
-        requestedBy: name,
-        requestedById: uid,
-        votes: 0,
-        voters: {},
-        timestamp: Date.now()
-      });
-
-      if (currentUser) {
-        set(ref(db, `users_playlists/${currentUser.uid}/${videoId}`), { videoId, addedAt: Date.now() });
-      } else if (guestProfile) {
-        saveToGuestPlaylist(videoId);
-      }
+      if (currentUser) set(ref(db, `users_playlists/${currentUser.uid}/${videoId}`), { videoId, addedAt: Date.now() });
+      else if (guestProfile) saveToGuestPlaylist(videoId);
 
       const details = await fetchVideoDetails(videoId);
-      showToast(`"${details.title}" sumado a la cola 🔥`, 'success');
+      showToast(`"${details.title}" agregado a la cola.`, 'success');
     }
 
     function saveToGuestPlaylist(videoId) {
@@ -646,55 +746,39 @@
       renderGuestPlaylist();
     }
 
+    function renderPlaylistItem(song, onAdd) {
+      const li = document.createElement('li');
+      li.className = "flex items-center gap-3 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800 hover:border-slate-700 transition";
+      li.innerHTML = `
+        <img src="${song.thumbnail}" class="w-14 h-10 object-cover rounded border border-slate-800 flex-shrink-0"/>
+        <div class="overflow-hidden flex-1 min-w-0">
+          <p class="font-medium text-xs text-slate-200 truncate">${escapeHTML(song.title)}</p>
+          <p class="text-[10px] text-slate-500 truncate">${escapeHTML(song.author)}</p>
+        </div>
+        <button class="add-again-btn btn btn-primary btn-icon text-base font-bold">+</button>`;
+      li.querySelector('.add-again-btn').addEventListener('click', onAdd);
+      return li;
+    }
+
     async function renderGuestPlaylist() {
       if (!guestProfile) return;
       const container = document.getElementById('my-playlist-container');
       const list = JSON.parse(localStorage.getItem('jukebox_guest_playlist') || '{}');
-      const videoIds = Object.keys(list);
-
+      const ids = Object.keys(list);
       container.innerHTML = '';
-      if (!videoIds.length) {
-        container.innerHTML = '<li class="text-xs text-slate-500 text-center py-12">Aún no agregaste canciones.</li>';
-        return;
-      }
-
-      const songs = await Promise.all(videoIds.map(async (vid) => ({
-        videoId: vid, ...(await fetchVideoDetails(vid))
-      })));
-
-      songs.forEach((song) => {
-        const li = document.createElement('li');
-        li.className = "flex items-center justify-between gap-3 bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/60 shadow-md";
-        li.innerHTML = `
-          <div class="flex items-center gap-3 overflow-hidden flex-1">
-            <img src="${song.thumbnail}" class="w-14 h-10 object-cover rounded-lg border border-slate-800 flex-shrink-0"/>
-            <div class="overflow-hidden min-w-0">
-              <p class="font-bold text-slate-200 text-xs truncate">${escapeHTML(song.title)}</p>
-              <p class="text-[10px] text-slate-400 truncate">${escapeHTML(song.author)}</p>
-            </div>
-          </div>
-          <button class="add-again-btn bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-sm w-8 h-8 rounded-full flex items-center justify-center shadow transition">+</button>`;
-        li.querySelector('.add-again-btn').addEventListener('click', () => addSongToQueue(song.videoId));
-        container.appendChild(li);
-      });
+      if (!ids.length) { container.innerHTML = '<li class="text-xs text-slate-500 text-center py-16">Sin canciones guardadas</li>'; return; }
+      const songs = await Promise.all(ids.map(async vid => ({ videoId: vid, ...(await fetchVideoDetails(vid)) })));
+      songs.forEach(s => container.appendChild(renderPlaylistItem(s, () => addSongToQueue(s.videoId))));
     }
 
     function toggleVote(songKey) {
       const uid = getUserId();
-      if (!uid) {
-        authModal.classList.remove('hidden');
-        return;
-      }
+      if (!uid) { authModal.classList.remove('hidden'); return; }
       runTransaction(ref(db, `playlist/${songKey}`), (song) => {
         if (song) {
           if (!song.voters) song.voters = {};
-          if (song.voters[uid]) {
-            song.votes = Math.max(0, (song.votes || 1) - 1);
-            delete song.voters[uid];
-          } else {
-            song.votes = (song.votes || 0) + 1;
-            song.voters[uid] = true;
-          }
+          if (song.voters[uid]) { song.votes = Math.max(0, (song.votes || 1) - 1); delete song.voters[uid]; }
+          else { song.votes = (song.votes || 0) + 1; song.voters[uid] = true; }
         }
         return song;
       });
@@ -705,85 +789,50 @@
       isPlaying = true;
       isFallbackActive = false;
       updateNowPlayingDisplay(song.title, song.requestedBy);
-
+      updateAutopilotContext(song.videoId, song);
+      if (isHostMode) document.getElementById('player-label').textContent = 'Parlante activo';
       if (isHostMode && player?.loadVideoById) {
         player.loadVideoById(song.videoId);
         set(nowPlayingRef, {
-          active: true, videoId: song.videoId,
-          title: song.title, requestedBy: song.requestedBy,
-          isFallback: false, timestamp: Date.now()
+          active: true, videoId: song.videoId, title: song.title,
+          requestedBy: song.requestedBy, isFallback: false, timestamp: Date.now()
         });
       }
     }
 
     document.getElementById('skip-btn').addEventListener('click', () => {
       if (!isHostMode) return;
-      if (currentSongKey && !isFallbackActive) {
-        remove(ref(db, `playlist/${currentSongKey}`));
-      }
-      currentSongKey = null;
-      isPlaying = false;
-      isFallbackActive = false;
+      if (currentSongKey && !isFallbackActive) remove(ref(db, `playlist/${currentSongKey}`));
+      currentSongKey = null; isPlaying = false; isFallbackActive = false;
       checkNextSongOrPlayRandom();
     });
 
     document.getElementById('song-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      const query = searchInput.value.trim();
-      const videoId = extractVideoID(query);
-      if (videoId) {
-        addSongToQueue(videoId);
-        searchInput.value = '';
-        suggestionsList.classList.add('hidden');
-      } else {
-        searchYouTubeAPI(query);
-      }
+      const q = searchInput.value.trim();
+      const vid = extractVideoID(q);
+      if (vid) { addSongToQueue(vid); searchInput.value = ''; suggestionsList.classList.add('hidden'); }
+      else searchYouTubeAPI(q);
     });
 
     function listenToMyPlaylist() {
       if (!currentUser) return;
-      onValue(ref(db, `users_playlists/${currentUser.uid}`), async (snapshot) => {
-        const data = snapshot.val();
+      onValue(ref(db, `users_playlists/${currentUser.uid}`), async (snap) => {
+        const data = snap.val();
         const container = document.getElementById('my-playlist-container');
         container.innerHTML = '';
-
-        if (!data) {
-          container.innerHTML = '<li class="text-xs text-slate-500 text-center py-12">Aún no agregaste canciones.</li>';
-          return;
-        }
-
-        const songs = await Promise.all(Object.keys(data).map(async (vid) => ({
-          videoId: vid, ...(await fetchVideoDetails(vid))
-        })));
-
-        songs.forEach((song) => {
-          const li = document.createElement('li');
-          li.className = "flex items-center justify-between gap-3 bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/60 shadow-md";
-          li.innerHTML = `
-            <div class="flex items-center gap-3 overflow-hidden flex-1">
-              <img src="${song.thumbnail}" class="w-14 h-10 object-cover rounded-lg border border-slate-800 flex-shrink-0"/>
-              <div class="overflow-hidden min-w-0">
-                <p class="font-bold text-slate-200 text-xs truncate">${escapeHTML(song.title)}</p>
-                <p class="text-[10px] text-slate-400 truncate">${escapeHTML(song.author)}</p>
-              </div>
-            </div>
-            <button class="add-again-btn bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-sm w-8 h-8 rounded-full flex items-center justify-center shadow transition">+</button>`;
-          li.querySelector('.add-again-btn').addEventListener('click', () => addSongToQueue(song.videoId));
-          container.appendChild(li);
-        });
+        if (!data) { container.innerHTML = '<li class="text-xs text-slate-500 text-center py-16">Sin canciones guardadas</li>'; return; }
+        const songs = await Promise.all(Object.keys(data).map(async vid => ({ videoId: vid, ...(await fetchVideoDetails(vid)) })));
+        songs.forEach(s => container.appendChild(renderPlaylistItem(s, () => addSongToQueue(s.videoId))));
       });
     }
 
-    // Sync now playing for remote clients
-    onValue(nowPlayingRef, (snapshot) => {
+    onValue(nowPlayingRef, (snap) => {
       if (isHostMode) return;
-      const data = snapshot.val();
-      if (data?.active) {
-        updateNowPlayingDisplay(data.title, data.requestedBy);
-      }
+      const data = snap.val();
+      if (data?.active) updateNowPlayingDisplay(data.title, data.requestedBy);
     });
 
-    // Queue listener
     onValue(playlistRef, async (snapshot) => {
       const data = snapshot.val();
       const container = document.getElementById('playlist-container');
@@ -794,7 +843,7 @@
       playlistData = [];
 
       if (!data) {
-        container.innerHTML = '<li class="text-xs text-slate-500 text-center py-12">No hay canciones pedidas aún...</li>';
+        container.innerHTML = '<li class="text-xs text-slate-500 text-center py-16">La cola está vacía</li>';
         queueCount.textContent = '0';
         queueStatus.textContent = '';
         if (!isPlaying && isHostMode) checkNextSongOrPlayRandom();
@@ -802,25 +851,20 @@
       }
 
       const keys = Object.keys(data);
-
       if (keys.length > MAX_QUEUE_SIZE) {
-        const sorted = keys.map(k => ({ k, ts: data[k].timestamp || 0 }))
-          .sort((a, b) => a.ts - b.ts);
-        for (let i = 0; i < keys.length - MAX_QUEUE_SIZE; i++) {
-          remove(ref(db, `playlist/${sorted[i].k}`));
-        }
+        const sorted = keys.map(k => ({ k, ts: data[k].timestamp || 0 })).sort((a, b) => a.ts - b.ts);
+        for (let i = 0; i < keys.length - MAX_QUEUE_SIZE; i++) remove(ref(db, `playlist/${sorted[i].k}`));
         return;
       }
 
       queueCount.textContent = keys.length;
       queueStatus.textContent = keys.length >= MAX_QUEUE_SIZE
-        ? '⚠️ Cola llena — esperá a que pasen temas'
-        : `Máx. ${MAX_SONGS_PER_USER} temas por persona • cooldown 2 min`;
+        ? 'Cola llena — esperá a que pasen temas'
+        : `Máx. ${MAX_SONGS_PER_USER} temas por persona · intervalo 2 min`;
 
-      const songs = await Promise.all(keys.map(async (key) => {
+      const songs = await Promise.all(keys.map(async key => {
         const item = data[key];
-        const details = await fetchVideoDetails(item.videoId);
-        return { key, ...item, ...details };
+        return { key, ...item, ...(await fetchVideoDetails(item.videoId)) };
       }));
 
       playlistData = songs.sort((a, b) => {
@@ -833,38 +877,34 @@
       playlistData.forEach((song, index) => {
         const hasVoted = uid && song.voters?.[uid];
         const isMySong = uid && song.requestedById === uid;
+        const isFirst = index === 0;
 
         const li = document.createElement('li');
-        li.className = "flex items-center justify-between gap-3 bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/60 shadow-md hover:border-slate-600 transition";
+        li.className = `flex items-center gap-3 p-2.5 rounded-lg border transition ${isFirst ? 'bg-amber-500/5 border-amber-500/20' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'}`;
         li.innerHTML = `
-          <div class="flex items-center gap-3 overflow-hidden flex-1">
-            <div class="relative flex-shrink-0">
-              <img src="${song.thumbnail}" class="w-16 h-12 object-cover rounded-lg border border-slate-800"/>
-              <span class="absolute -top-2 -left-2 bg-amber-500 text-slate-950 font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border border-slate-900 shadow">${index + 1}</span>
-            </div>
-            <div class="overflow-hidden min-w-0">
-              <p class="font-bold text-slate-200 text-xs truncate">${escapeHTML(song.title)}</p>
-              <p class="text-[11px] text-slate-400 truncate">${escapeHTML(song.author)}</p>
-              <p class="text-[10px] text-amber-400 font-medium truncate">🔥 ${escapeHTML(song.requestedBy)}</p>
-            </div>
+          <span class="w-6 text-center text-[11px] font-semibold text-slate-500 flex-shrink-0">${index + 1}</span>
+          <img src="${song.thumbnail}" class="w-14 h-10 object-cover rounded border border-slate-800 flex-shrink-0"/>
+          <div class="overflow-hidden flex-1 min-w-0">
+            <p class="font-medium text-xs text-slate-200 truncate">${escapeHTML(song.title)}</p>
+            <p class="text-[10px] text-slate-500 truncate">${escapeHTML(song.author)}</p>
+            <p class="text-[10px] text-slate-600 truncate mt-0.5">${escapeHTML(song.requestedBy)}</p>
           </div>
-          <div class="flex items-center gap-2 flex-shrink-0">
-            <button class="vote-btn ${hasVoted ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'} border border-slate-700 text-xs px-2 py-1 rounded-lg font-bold flex items-center gap-1 transition">
-              👍 <span>${song.votes || 0}</span>
+          <div class="flex items-center gap-1.5 flex-shrink-0">
+            <button class="vote-btn btn btn-ghost btn-icon text-[11px] ${hasVoted ? '!bg-amber-500/20 !border-amber-500/40 !text-amber-400' : ''}" title="Votar">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+              <span>${song.votes || 0}</span>
             </button>
-            ${(isMySong || isHostMode) ? `<button class="delete-btn text-red-400 hover:text-red-300 p-1 rounded-lg text-xs" title="Eliminar">🗑️</button>` : ''}
+            ${(isMySong || isHostMode) ? `<button class="delete-btn btn btn-danger btn-icon" title="Eliminar">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>` : ''}
           </div>`;
 
         li.querySelector('.vote-btn').addEventListener('click', () => toggleVote(song.key));
-        const delBtn = li.querySelector('.delete-btn');
-        if (delBtn) delBtn.addEventListener('click', () => remove(ref(db, `playlist/${song.key}`)));
-
+        li.querySelector('.delete-btn')?.addEventListener('click', () => remove(ref(db, `playlist/${song.key}`)));
         container.appendChild(li);
       });
 
-      if (playlistData.length > 0 && (!isPlaying || isFallbackActive) && isHostMode) {
-        playSongNow(playlistData[0]);
-      }
+      if (playlistData.length > 0 && !isPlaying && isHostMode) playSongNow(playlistData[0]);
     });
   </script>
 </body>
