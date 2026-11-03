@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0b1120"/>
+  <meta name="color-scheme" content="dark"/>
+  <title>Los de la tarde — Musikita pa l@s compis</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --accent: #f59e0b;
+      --accent-hover: #d97706;
+      --surface: #1e293b;
+      --surface-elevated: #334155;
+      --border: #475569;
+    }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      background: linear-gradient(160deg, #0b1120 0%, #0f172a 50%, #111827 100%);
+      background-attachment: fixed;
+      color: #f1f5f9;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .toast { animation: toast-in 0.2s ease-out; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
+      font-size: 0.75rem; font-weight: 600; line-height: 1;
+      padding: 0.5rem 0.875rem; border-radius: 0.5rem;
+      transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+      white-space: nowrap; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: #cbd5e1; }
+    .btn-ghost:hover { background: var(--surface-elevated); color: #fff; }
+    .btn-primary { background: var(--accent); border: 1px solid var(--accent); color: #0f172a; }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .btn-danger { background: transparent; border: 1px solid #7f1d1d; color: #fca5a5; }
+    .btn-danger:hover { background: #7f1d1d33; }
+    .btn-icon { padding: 0.5rem; min-width: 2.25rem; min-height: 2.25rem; }
+    @media (pointer: coarse) { .btn-icon { min-width: 2.5rem; min-height: 2.5rem; } }
+    .tab-btn { flex: 1; padding: 0.625rem 0.75rem; font-size: 0.75rem; font-weight: 600; border-radius: 0.5rem; transition: all 0.15s; }
+    .tab-btn-active { background: var(--accent); color: #0f172a; }
+    .tab-btn-inactive { background: transparent; color: #94a3b8; }
+    .tab-btn-inactive:hover { color: #e2e8f0; background: #33415544; }
+    .card { background: #1e293bcc; border: 1px solid #334155; border-radius: 0.875rem; }
+    .input-field {
+      background: #0f172a; border: 1px solid #334155; border-radius: 0.5rem;
+      padding: 0.625rem 0.875rem; font-size: 1rem; color: #f1f5f9;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    @media (min-width: 640px) { .input-field { font-size: 0.875rem; } }
+    .input-field:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px #f59e0b22; }
+    .btn:focus-visible, .tab-btn:focus-visible, a:focus-visible, summary:focus-visible {
+      outline: 2px solid var(--accent); outline-offset: 2px;
+    }
+    .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 10px; }
+    .eq i { display: block; width: 2px; height: 100%; background: var(--accent); transform-origin: bottom; animation: eq 0.9s ease-in-out infinite; }
+    .eq i:nth-child(2) { animation-delay: -0.3s; }
+    .eq i:nth-child(3) { animation-delay: -0.6s; }
+    @keyframes eq { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+    .skeleton { background: linear-gradient(90deg, #1e293b 25%, #273449 37%, #1e293b 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; }
+    @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+    }
+  </style>
+</head>
+<body class="min-h-[100dvh] flex flex-col p-4 sm:p-6 max-w-7xl mx-auto">
+
+  <div id="toast-container" role="status" aria-live="polite" class="fixed bottom-6 right-4 left-4 sm:left-auto sm:w-80 z-[60] flex flex-col items-end gap-2 pointer-events-none"></div>
+
+  <!-- AUTH MODAL -->
+  <div id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
+    <div class="card p-6 sm:p-8 max-w-md w-full shadow-2xl">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center">
+          <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+        </div>
+        <div>
+          <h2 id="auth-title" class="text-xl font-bold text-white">Los de la tarde</h2>
+          <p class="text-xs text-slate-400">Musikita pa l@s pib@s</p>
+        </div>
+      </div>
+      <p class="text-sm text-slate-400 mb-6">Poné tu nombre para pedir y votar temas.</p>
+
+      <div>
+        <label for="guest-name-input" class="block text-xs font-medium text-slate-400 mb-2">Tu nombre</label>
+        <input id="guest-name-input" type="text" maxlength="24" placeholder="Tu nombre" autocomplete="nickname" enterkeyhint="go"
+          class="input-field w-full mb-3"/>
+        <button id="guest-login-btn" class="btn btn-ghost w-full py-2.5">Entrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR MODAL -->
+  <div id="qr-modal" role="dialog" aria-modal="true" aria-labelledby="qr-title" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm hidden">
+    <div class="card p-6 max-w-sm w-full text-center relative">
+      <button id="close-qr-btn" class="absolute top-3 right-3 text-slate-400 hover:text-white p-2 rounded-lg" aria-label="Cerrar">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      <h3 id="qr-title" class="text-base font-semibold text-white mb-1">Unirse desde el celular</h3>
+      <p class="text-xs text-slate-400 mb-5">Escaneá el código para pedir y votar temas.</p>
+      <div id="qrcode" class="inline-block p-3 bg-white rounded-lg"></div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="mb-6">
+    <div class="flex items-center justify-between gap-4 mb-5">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-lg font-bold text-white truncate">Los de la tarde</h1>
+          <p class="text-[11px] text-slate-500 hidden sm:block">musikita pa los pibes/as</p>
+        </div>
+      </div>
+
+      <div id="user-profile" class="flex items-center gap-2 flex-shrink-0">
+        <button id="show-qr-btn" class="btn btn-ghost hidden sm:inline-flex">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+          Código QR
+        </button>
+        <button id="show-qr-btn-mobile" class="btn btn-ghost btn-icon sm:hidden" title="Código QR" aria-label="Código QR">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+        </button>
+        <div class="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
+          <img id="user-avatar" src="" class="w-6 h-6 rounded-full border border-slate-600 hidden" alt="" referrerpolicy="no-referrer"/>
+          <span id="current-user-display" class="text-xs font-medium text-slate-300 max-w-[100px] truncate">Invitado</span>
+        </div>
+        <button id="auth-action-btn" class="btn btn-ghost btn-icon" title="Cuenta" aria-label="Cuenta">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search bar -->
+    <form id="song-form" class="flex gap-2" role="search">
+      <div class="relative flex-1">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="text" id="search-input" placeholder="Buscar en YouTube o pegar un enlace..."
+          autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" required
+          role="combobox" aria-expanded="false" aria-controls="suggestions-list" aria-autocomplete="list" aria-label="Buscar un tema"
+          class="input-field w-full pl-10"/>
+        <ul id="suggestions-list" role="listbox" class="absolute z-40 left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-lg max-h-72 overflow-y-auto hidden shadow-xl divide-y divide-slate-800"></ul>
+      </div>
+      <button type="submit" class="btn btn-primary px-5">Buscar</button>
+    </form>
+  </header>
+
+  <main class="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1">
+
+    <!-- Player -->
+    <div class="lg:col-span-7 xl:col-span-8 lg:self-start lg:sticky lg:top-4">
+      <section class="card p-4 sm:p-5">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div class="flex items-center gap-2">
+            <span id="live-dot" class="w-2 h-2 rounded-full bg-slate-600"></span>
+            <h2 id="player-label" class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Reproductor</h2>
+          </div>
+          <label class="flex items-center gap-2.5 cursor-pointer select-none">
+            <span class="text-xs font-medium text-slate-400">Parlante principal</span>
+            <div class="relative">
+              <input type="checkbox" id="host-mode-toggle" class="sr-only peer"/>
+              <div class="w-9 h-5 bg-slate-700 rounded-full peer-checked:bg-amber-500 peer-focus-visible:ring-2 peer-focus-visible:ring-amber-400 transition-colors"></div>
+              <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+            </div>
+          </label>
+        </div>
+
+        <div id="player-wrapper" class="relative w-full aspect-video bg-black rounded-lg overflow-hidden border border-slate-800">
+          <div id="player"></div>
+          <div id="listener-overlay" class="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center text-center p-8 hidden">
+            <div class="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center mb-4">
+              <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            </div>
+            <p class="text-sm font-medium text-slate-200">Modo control remoto</p>
+            <p class="text-xs text-slate-500 mt-1 max-w-xs">El audio se reproduce en el parlante principal. Desde acá podés pedir y votar temas.</p>
+          </div>
+        </div>
+
+        <div id="now-playing-info" class="mt-4 p-3 bg-slate-900/50 rounded-lg border border-slate-800 hidden">
+          <div class="flex items-center gap-3">
+            <img id="current-song-thumb" src="" alt="" width="64" height="48" class="w-16 h-12 object-cover rounded border border-slate-800 flex-shrink-0 bg-slate-800"/>
+            <div class="min-w-0 flex-1">
+              <p class="flex items-center gap-2 text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
+                <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>Reproduciendo
+              </p>
+              <p id="current-song-title" class="text-sm font-semibold text-white truncate">--</p>
+              <p class="text-xs text-slate-400 mt-0.5 truncate">Solicitado por <span id="current-song-user" class="text-slate-300">--</span></p>
+            </div>
+            <button id="skip-btn" class="btn btn-ghost hidden flex-shrink-0" aria-label="Siguiente tema">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+              Siguiente
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Queue -->
+    <div class="lg:col-span-5 xl:col-span-4">
+      <section class="card p-4 sm:p-5 h-full flex flex-col">
+        <div class="flex items-center justify-between mb-1">
+          <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Biblioteca</h2>
+          <span class="text-[10px] text-slate-500 tabular-nums"><span id="queue-count">0</span> / <span id="queue-max">15</span> en cola</span>
+        </div>
+
+        <div class="flex gap-1 p-1 bg-slate-900/60 rounded-lg mb-3 mt-2" role="tablist">
+          <button id="tab-queue" role="tab" aria-selected="true" aria-controls="content-queue" class="tab-btn tab-btn-active">Cola de reproducción</button>
+          <button id="tab-my-list" role="tab" aria-selected="false" aria-controls="content-my-list" class="tab-btn tab-btn-inactive">Mi biblioteca</button>
+        </div>
+
+        <p id="queue-status" class="text-[10px] text-slate-500 mb-3"></p>
+
+        <div id="content-queue" role="tabpanel" class="flex-1 flex flex-col min-h-0">
+          <ul id="playlist-container" class="space-y-2 overflow-y-auto max-h-[min(480px,60vh)] pr-1 no-scrollbar flex-1">
+            <li class="text-xs text-slate-500 text-center py-16">La cola está vacía</li>
+          </ul>
+        </div>
+
+        <div id="content-my-list" role="tabpanel" class="flex-1 flex-col hidden min-h-0">
+          <p class="text-[11px] text-slate-500 mb-3">Tus temas guardados. Usá el botón para volver a agregarlos a la cola.</p>
+          <ul id="my-playlist-container" class="space-y-2 overflow-y-auto max-h-[min(450px,55vh)] pr-1 no-scrollbar flex-1">
+            <li class="text-xs text-slate-500 text-center py-16">Sin canciones guardadas</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="mt-8 pt-5 border-t border-slate-800 text-center text-slate-600 text-[11px]">
+    <p>&copy; <span id="current-year"></span> Los de la tarde &middot; Nexus Studios &middot; Robinson Chagas</p>
+  </footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove, set, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signOut, browserLocalPersistence, setPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const APP_URL = 'https://turno-tarde-musica.vercel.app';
+    const MAX_QUEUE_SIZE = 15;
+    const MAX_SONGS_PER_USER = 2;
+    const ADD_COOLDOWN_MS = 120000;
+    const YOUTUBE_API_KEY = "AIzaSyDcsSE-tef4Bs_4W7fuo-tBf1IDEkcLSmA";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBV7SShnRCTNpOloRPZzwxTaOG3FbLGIww",
+      authDomain: "los-pibes-de-la-tarde-5465d.firebaseapp.com",
+      databaseURL: "https://los-pibes-de-la-tarde-5465d-default-rtdb.firebaseio.com",
+      projectId: "los-pibes-de-la-tarde-5465d",
+      storageBucket: "los-pibes-de-la-tarde-5465d.firebasestorage.app",
+      messagingSenderId: "676490232061",
+      appId: "1:676490232061:web:197998900345d439dfbe94",
+      measurementId: "G-N15E7NXZJD"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+    setPersistence(auth, browserLocalPersistence).catch(console.error);
+
+    const playlistRef = ref(db, 'playlist');
+    const nowPlayingRef = ref(db, 'nowPlaying');
+
+    const fallbackSongs = [
+      { videoId: "5qap5aO4i9A", title: "Lofi Hip Hop Beats", requestedBy: "Radio automática" },
+      { videoId: "3tmd-ClpJxA", title: "Cumbia / Fiesta Hits", requestedBy: "Modo aleatorio" },
+      { videoId: "kJQP7kiw5Fk", title: "Despacito - Luis Fonsi", requestedBy: "Auto-DJ" }
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+    const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* modo privado */ } };
+    const lsDel = (k) => { try { localStorage.removeItem(k); } catch { /* modo privado */ } };
+    const safeSet = (r, v) => set(r, v).catch(console.error);
+
+    let player = null, playerReady = false;
+    let currentSongKey = null, isPlaying = false, playlistData = [];
+    let isFallbackActive = false, currentUser = null, isGuestMode = false;
+    let guestProfile = null, isHostMode = false, qrGenerated = false;
+    let lastAddTime = Number(lsGet('jukebox_last_add')) || 0;
+    let autopilotContext = null;
+    let recentAutoplayIds = [];
+    let isAutopilotLoading = false;
+    let nowPlayingVideoId = null;
+    let consecutiveErrors = 0;
+    let isAdding = false;
+    let unsubscribeLibrary = null;
+    const videoMetaCache = {};
+
+    const GENRE_PATTERNS = [
+      { genre: 'plena', keywords: ['plena', 'plenero', 'pleneros'] },
+      { genre: 'cumbia', keywords: ['cumbia', 'cumbiero', 'cumbia villera'] },
+      { genre: 'reggaeton', keywords: ['reggaeton', 'reguetón', 'regueton', 'perreo', 'dembow'] },
+      { genre: 'salsa', keywords: ['salsa', 'son cubano', 'timba'] },
+      { genre: 'bachata', keywords: ['bachata'] },
+      { genre: 'merengue', keywords: ['merengue'] },
+      { genre: 'cuarteto', keywords: ['cuarteto', 'cordobes', 'córdoba'] },
+      { genre: 'rock', keywords: ['rock', 'metal', 'punk', 'grunge', 'indie'] },
+      { genre: 'pop', keywords: ['pop', 'k-pop', 'j-pop'] },
+      { genre: 'trap', keywords: ['trap', 'drill', 'urbano'] },
+      { genre: 'hip hop', keywords: ['hip hop', 'hip-hop', 'rap'] },
+      { genre: 'lofi', keywords: ['lofi', 'lo-fi', 'chill beats', 'study beats'] },
+      { genre: 'electronic', keywords: ['electronic', 'edm', 'house', 'techno', 'electro'] },
+      { genre: 'tango', keywords: ['tango', 'milonga', 'candombe'] },
+      { genre: 'folklore', keywords: ['folklore', 'folclore', 'zamba', 'chacarera', 'carnavalito'] },
+      { genre: 'vallenato', keywords: ['vallenato'] },
+      { genre: 'ranchera', keywords: ['ranchera', 'mariachi', 'corrido'] },
+      { genre: 'jazz', keywords: ['jazz', 'blues', 'swing'] },
+      { genre: 'classical', keywords: ['classical', 'clásica', 'sinfonia', 'orquesta'] },
+    ];
+
+    const TAB_ACTIVE = "tab-btn tab-btn-active";
+    const TAB_INACTIVE = "tab-btn tab-btn-inactive";
+    const EMPTY_QUEUE_HTML = '<li class="text-xs text-slate-500 text-center py-16">La cola está vacía</li>';
+    const EMPTY_LIBRARY_HTML = '<li class="text-xs text-slate-500 text-center py-16">Sin canciones guardadas</li>';
+    const LOGIN_LIBRARY_HTML = '<li class="text-xs text-slate-500 text-center py-16">Ingresá tu nombre para guardar tu biblioteca.</li>';
+    const SKELETON_HTML = Array.from({ length: 3 }, () =>
+      '<li class="skeleton h-[58px] rounded-lg border border-slate-800" aria-hidden="true"></li>').join('');
+    const TRASH_ICON = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
+    const BASE_TITLE = document.title;
+
+    $('current-year').textContent = new Date().getFullYear();
+    $('queue-max').textContent = MAX_QUEUE_SIZE;
+
+    function escapeHTML(str) {
+      return String(str ?? '').replace(/[&<>'"]/g,
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+
+    const entityDecoder = document.createElement('textarea');
+    function decodeEntities(str) {
+      entityDecoder.innerHTML = str || '';
+      return entityDecoder.value;
+    }
+
+    function thumbFor(videoId) { return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`; }
+
+    function formatWait(ms) {
+      const s = Math.ceil(ms / 1000);
+      return s >= 60 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} min` : `${s}s`;
+    }
+
+    function showToast(msg, type = 'info') {
+      const colors = { info: 'bg-slate-800 border-slate-600', success: 'bg-emerald-950 border-emerald-700', error: 'bg-red-950 border-red-800' };
+      const box = $('toast-container');
+      while (box.children.length >= 3) box.firstChild.remove();
+      const el = document.createElement('div');
+      el.className = `toast pointer-events-auto px-4 py-2.5 rounded-lg border text-xs text-slate-200 shadow-xl max-w-full ${colors[type] || colors.info}`;
+      el.textContent = msg;
+      box.appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    function getUserId() { return currentUser?.uid || guestProfile?.id || null; }
+    function getUserName() { return currentUser?.displayName || guestProfile?.name || 'Invitado'; }
+    function isLoggedIn() { return !!(currentUser || guestProfile); }
+
+    function loadGuestProfile() {
+      try { return JSON.parse(lsGet('jukebox_guest') || 'null'); } catch { return null; }
+    }
+
+    function saveGuestProfile(name) {
+      guestProfile = { id: 'guest_' + Math.random().toString(36).slice(2, 10), name: name.trim().slice(0, 24) };
+      lsSet('jukebox_guest', JSON.stringify(guestProfile));
+      return guestProfile;
+    }
+
+    function clearGuestProfile() {
+      guestProfile = null;
+      lsDel('jukebox_guest');
+      lsDel('jukebox_guest_playlist');
+    }
+
+    function updateUserUI() {
+      const display = $('current-user-display');
+      const avatar = $('user-avatar');
+      if (currentUser) {
+        display.textContent = currentUser.displayName || 'Usuario';
+        if (currentUser.photoURL) { avatar.src = currentUser.photoURL; avatar.classList.remove('hidden'); }
+        else avatar.classList.add('hidden');
+      } else if (guestProfile) {
+        display.textContent = guestProfile.name;
+        avatar.classList.add('hidden');
+      } else {
+        display.textContent = 'Invitado';
+        avatar.classList.add('hidden');
+      }
+    }
+
+    function updateHostUI() {
+      const overlay = $('listener-overlay');
+      const skipBtn = $('skip-btn');
+      const liveDot = $('live-dot');
+      const label = $('player-label');
+      if (isHostMode) {
+        overlay.classList.add('hidden');
+        skipBtn.classList.remove('hidden');
+        liveDot.className = 'w-2 h-2 rounded-full bg-red-500 animate-pulse';
+        label.textContent = 'Parlante activo';
+      } else {
+        overlay.classList.remove('hidden');
+        skipBtn.classList.add('hidden');
+        liveDot.className = 'w-2 h-2 rounded-full bg-slate-600';
+        label.textContent = 'Control remoto';
+      }
+    }
+
+    /* ---------- Tabs ---------- */
+    const tabQueue = $('tab-queue');
+    const tabMyList = $('tab-my-list');
+    const contentQueue = $('content-queue');
+    const contentMyList = $('content-my-list');
+
+    function selectTab(name) {
+      const q = name === 'queue';
+      tabQueue.className = q ? TAB_ACTIVE : TAB_INACTIVE;
+      tabMyList.className = q ? TAB_INACTIVE : TAB_ACTIVE;
+      tabQueue.setAttribute('aria-selected', String(q));
+      tabMyList.setAttribute('aria-selected', String(!q));
+      contentQueue.classList.toggle('hidden', !q);
+      contentQueue.classList.toggle('flex', q);
+      contentMyList.classList.toggle('hidden', q);
+      contentMyList.classList.toggle('flex', !q);
+    }
+    tabQueue.addEventListener('click', () => selectTab('queue'));
+    tabMyList.addEventListener('click', () => selectTab('library'));
+
+    /* ---------- QR ---------- */
+    const qrModal = $('qr-modal');
+    function openQrModal() {
+      qrModal.classList.remove('hidden');
+      if (!qrGenerated && typeof QRCode !== 'undefined') {
+        new QRCode($('qrcode'), { text: APP_URL, width: 180, height: 180 });
+        qrGenerated = true;
+      }
+      $('close-qr-btn').focus();
+    }
+    function closeQrModal() { qrModal.classList.add('hidden'); }
+    $('show-qr-btn').addEventListener('click', openQrModal);
+    $('show-qr-btn-mobile').addEventListener('click', openQrModal);
+    $('close-qr-btn').addEventListener('click', closeQrModal);
+    qrModal.addEventListener('click', (e) => { if (e.target === qrModal) closeQrModal(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !qrModal.classList.contains('hidden')) closeQrModal();
+    });
+
+    /* ---------- Modo parlante ---------- */
+    $('host-mode-toggle').addEventListener('change', (e) => {
+      isHostMode = e.target.checked;
+      lsSet('jukebox_host_mode', isHostMode ? '1' : '0');
+      updateHostUI();
+      if (isHostMode) maybeStartPlayback();
+      else if (player?.stopVideo) {
+        player.stopVideo();
+        isPlaying = false; isFallbackActive = false; currentSongKey = null;
+      }
+    });
+
+    if (lsGet('jukebox_host_mode') === '1') {
+      $('host-mode-toggle').checked = true;
+      isHostMode = true;
+    }
+    updateHostUI();
+
+    /* ---------- Autenticación ---------- */
+    const authModal = $('auth-modal');
+
+    async function ensureGuestAuth() {
+      try {
+        if (!auth.currentUser) await signInAnonymously(auth);
+        if (auth.currentUser?.isAnonymous && guestProfile && guestProfile.id !== auth.currentUser.uid) {
+          guestProfile.id = auth.currentUser.uid;
+          lsSet('jukebox_guest', JSON.stringify(guestProfile));
+        }
+      } catch (err) {
+        console.warn('Acceso anónimo no disponible en Firebase:', err?.code || err);
+      }
+    }
+
+    let guestLoginBusy = false;
+    async function guestLogin() {
+      if (guestLoginBusy) return;
+      const name = $('guest-name-input').value.trim();
+      if (name.length < 2) { showToast('Ingresá tu nombre (mínimo 2 caracteres).', 'error'); return; }
+      guestLoginBusy = true;
+      $('guest-login-btn').disabled = true;
+      isGuestMode = true;
+      saveGuestProfile(name);
+      await ensureGuestAuth();
+      authModal.classList.add('hidden');
+      updateUserUI();
+      renderGuestPlaylist();
+      showToast(`Bienvenido, ${name}.`, 'success');
+      guestLoginBusy = false;
+      $('guest-login-btn').disabled = false;
+    }
+    $('guest-login-btn').addEventListener('click', guestLogin);
+    $('guest-name-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); guestLogin(); } });
+
+    $('auth-action-btn').addEventListener('click', () => {
+      if (currentUser) signOut(auth);
+      else if (guestProfile) {
+        clearGuestProfile(); isGuestMode = false;
+        if (auth.currentUser?.isAnonymous) signOut(auth).catch(console.error);
+        authModal.classList.remove('hidden');
+        updateUserUI();
+        libSeq++;
+        $('my-playlist-container').innerHTML = LOGIN_LIBRARY_HTML;
+      } else authModal.classList.remove('hidden');
+    });
+
+    let lastAuthUid = null;
+    onAuthStateChanged(auth, (user) => {
+      if (user && !user.isAnonymous) {
+        signOut(auth).catch(console.error);
+        return;
+      } else if (!isGuestMode && !guestProfile) {
+        currentUser = null;
+        if (unsubscribeLibrary) { unsubscribeLibrary(); unsubscribeLibrary = null; }
+        authModal.classList.remove('hidden'); updateUserUI();
+        libSeq++;
+        $('my-playlist-container').innerHTML = LOGIN_LIBRARY_HTML;
+      } else {
+        currentUser = null;
+        if (user?.isAnonymous && guestProfile && guestProfile.id !== user.uid) {
+          guestProfile.id = user.uid;
+          lsSet('jukebox_guest', JSON.stringify(guestProfile));
+        } else if (!user && guestProfile) ensureGuestAuth();
+        updateUserUI();
+      }
+
+      const uid = user?.uid || null;
+      if (uid !== lastAuthUid) {
+        lastAuthUid = uid;
+        attachRealtimeListeners();
+      }
+      renderQueue();
+    });
+
+    const savedGuest = loadGuestProfile();
+    if (savedGuest) {
+      guestProfile = savedGuest; isGuestMode = true;
+      authModal.classList.add('hidden'); updateUserUI(); renderGuestPlaylist();
+    }
+
+    /* ---------- Reproductor de YouTube ---------- */
+    const ytTag = document.createElement('script');
+    ytTag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(ytTag);
+
+    window.onYouTubeIframeAPIReady = function () {
+      player = new YT.Player('player', {
+        height: '100%', width: '100%',
+        playerVars: { autoplay: 0, controls: 1, playsinline: 1, rel: 0 },
+        events: {
+          onReady: () => { playerReady = true; maybeStartPlayback(); },
+          onStateChange: onPlayerStateChange,
+          onError: onPlayerError
+        }
+      });
+    };
+
+    function onPlayerStateChange(event) {
+      if (!isHostMode) return;
+      if (event.data === YT.PlayerState.PLAYING) consecutiveErrors = 0;
+      if (event.data === YT.PlayerState.ENDED) advanceAfterTrack();
+    }
+
+    function onPlayerError() {
+      if (!isHostMode) return;
+      consecutiveErrors++;
+      if (consecutiveErrors >= 4) {
+        showToast('Varios videos seguidos fallaron. Revisá la conexión.', 'error');
+        player?.stopVideo?.();
+        isPlaying = false; isFallbackActive = false; currentSongKey = null;
+        return;
+      }
+      showToast('Ese video no se puede reproducir. Pasando al siguiente.', 'error');
+      advanceAfterTrack();
+    }
+
+    function advanceAfterTrack() {
+      const finishedKey = (currentSongKey && !isFallbackActive) ? currentSongKey : null;
+      if (finishedKey) remove(ref(db, `playlist/${finishedKey}`)).catch(console.error);
+      currentSongKey = null; isPlaying = false; isFallbackActive = false;
+      nowPlayingVideoId = null;
+      safeSet(nowPlayingRef, { active: false, timestamp: Date.now() });
+      checkNextSongOrPlayRandom(finishedKey);
+    }
+
+    function maybeStartPlayback() {
+      if (!isHostMode || !playerReady || isPlaying) return;
+      checkNextSongOrPlayRandom();
+    }
+
+    /* ---------- Radio inteligente ---------- */
+    function detectGenre(meta) {
+      const haystack = `${meta.title || ''} ${meta.author || ''} ${(meta.tags || []).join(' ')} ${meta.description || ''}`.toLowerCase();
+      for (const { genre, keywords } of GENRE_PATTERNS) {
+        if (keywords.some(k => haystack.includes(k))) return genre;
+      }
+      return null;
+    }
+
+    function extractArtist(meta) {
+      const title = (meta.title || '').replace(/\s*\(.*?official.*?\)\s*/gi, '').trim();
+      for (const sep of [' - ', ' | ', ' – ', ' — ']) {
+        if (title.includes(sep)) {
+          const part = title.split(sep)[0].trim();
+          if (part.length >= 2 && part.length <= 80) return part;
+        }
+      }
+      const cleaned = title
+        .replace(/\s*(official|video|audio|lyrics|live|hd|4k|vevo|topic)\s*/gi, ' ')
+        .replace(/\s+/g, ' ').trim();
+      if (cleaned.length >= 2 && cleaned.length <= 60) return cleaned;
+      return meta.author || '';
+    }
+
+    function getExcludedVideoIds() {
+      const excluded = new Set(recentAutoplayIds);
+      playlistData.forEach(s => excluded.add(s.videoId));
+      if (autopilotContext?.lastVideoId) excluded.add(autopilotContext.lastVideoId);
+      return excluded;
+    }
+
+    async function youtubeSearchVideos(query, maxResults = 20) {
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=${maxResults}&q=${encodeURIComponent(query)}&type=video&videoEmbeddable=true&key=${YOUTUBE_API_KEY}`
+      );
+      const data = await res.json();
+      if (data.error || !data.items?.length) return [];
+      return data.items.filter(item => item.id?.videoId).map(item => ({
+        videoId: item.id.videoId,
+        title: decodeEntities(item.snippet.title),
+        author: decodeEntities(item.snippet.channelTitle),
+        thumbnail: thumbFor(item.id.videoId)
+      }));
+    }
+
+    async function findRelatedVideo(context) {
+      const excluded = getExcludedVideoIds();
+      const strategies = [];
+
+      if (context.artist) {
+        strategies.push(`${context.artist} official audio`);
+        strategies.push(`${context.artist} en vivo`);
+        strategies.push(context.artist);
+      }
+      if (context.genre) {
+        strategies.push(`${context.genre} mix`);
+        strategies.push(`${context.genre} en vivo`);
+        strategies.push(`mejores ${context.genre}`);
+        strategies.push(`${context.genre} ${context.artist || ''}`.trim());
+      }
+      if (context.author && context.author !== context.artist) {
+        strategies.push(`${context.author} music`);
+      }
+
+      for (const query of [...new Set(strategies)]) {
+        if (!query?.trim()) continue;
+        try {
+          const results = await youtubeSearchVideos(query, 20);
+          const candidates = results.filter(r => r.videoId && !excluded.has(r.videoId));
+          if (!candidates.length) continue;
+          const pick = candidates[Math.floor(Math.random() * Math.min(candidates.length, 10))];
+          const sameArtist = context.artist && (
+            pick.title.toLowerCase().includes(context.artist.toLowerCase()) ||
+            pick.author.toLowerCase().includes(context.artist.toLowerCase())
+          );
+          return {
+            ...pick,
+            reason: sameArtist ? `misma banda · ${context.artist}` : `mismo género · ${context.genre || 'similar'}`
+          };
+        } catch (err) { console.error(err); }
+      }
+      return null;
+    }
+
+    async function updateAutopilotContext(videoId, meta) {
+      const fullMeta = meta?.tags ? meta : await fetchVideoMetadata(videoId);
+      autopilotContext = {
+        lastVideoId: videoId,
+        title: fullMeta.title,
+        artist: extractArtist(fullMeta),
+        genre: detectGenre(fullMeta),
+        author: fullMeta.author
+      };
+      if (!recentAutoplayIds.includes(videoId)) recentAutoplayIds.push(videoId);
+      if (recentAutoplayIds.length > 50) recentAutoplayIds.shift();
+    }
+
+    async function playSmartAutopilot() {
+      if (!isHostMode || !playerReady || isAutopilotLoading) return;
+      isAutopilotLoading = true;
+      try {
+        let song = autopilotContext?.lastVideoId ? await findRelatedVideo(autopilotContext) : null;
+
+        if (!song) {
+          const excluded = getExcludedVideoIds();
+          const pool = fallbackSongs.filter(s => !excluded.has(s.videoId));
+          const list = pool.length ? pool : fallbackSongs;
+          const fb = list[Math.floor(Math.random() * list.length)];
+          const meta = await fetchVideoMetadata(fb.videoId);
+          if (!isHostMode || isPlaying) return;
+          await updateAutopilotContext(fb.videoId, meta);
+          song = { videoId: fb.videoId, title: meta.title, author: meta.author, reason: 'radio automática' };
+        } else {
+          if (!isHostMode || isPlaying) return;
+          await updateAutopilotContext(song.videoId, song);
+        }
+
+        if (!isHostMode || isPlaying) return;
+
+        isFallbackActive = true;
+        isPlaying = true;
+        currentSongKey = null;
+        nowPlayingVideoId = song.videoId;
+        player.loadVideoById(song.videoId);
+        const label = `Radio · ${song.reason}`;
+        updateNowPlayingDisplay(song.title, label, song.videoId);
+        $('player-label').textContent = 'Radio inteligente';
+        safeSet(nowPlayingRef, {
+          active: true, videoId: song.videoId, title: song.title,
+          requestedBy: label, isFallback: true, isAutopilot: true, timestamp: Date.now()
+        });
+        renderQueue();
+      } catch {
+        showToast('No se pudo cargar la radio automática.', 'error');
+      } finally {
+        isAutopilotLoading = false;
+      }
+    }
+
+    function checkNextSongOrPlayRandom(excludeKey = null) {
+      if (!isHostMode) return;
+      const next = playlistData.find(s => s.key !== excludeKey);
+      if (next) { playSongNow(next); return; }
+      playSmartAutopilot();
+    }
+
+    /* ---------- Metadata de videos ---------- */
+    function extractVideoID(url) {
+      const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/))([\w-]{11})/);
+      return m ? m[1] : null;
+    }
+
+    function updateNowPlayingDisplay(title, requestedBy, videoId) {
+      $('current-song-title').textContent = title;
+      $('current-song-user').textContent = requestedBy;
+      if (videoId) $('current-song-thumb').src = thumbFor(videoId);
+      $('now-playing-info').classList.remove('hidden');
+      document.title = `▶ ${title} · ${BASE_TITLE}`;
+    }
+
+    function hideNowPlaying() {
+      $('now-playing-info').classList.add('hidden');
+      document.title = BASE_TITLE;
+    }
+
+    async function fetchVideoMetadata(videoId) {
+      if (videoMetaCache[videoId]) return videoMetaCache[videoId];
+      try {
+        const res = await fetch(
+          `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${YOUTUBE_API_KEY}`
+        );
+        const data = await res.json();
+        const s = data.items?.[0]?.snippet;
+        if (s) {
+          const meta = {
+            title: decodeEntities(s.title) || 'Tema de YouTube',
+            author: decodeEntities(s.channelTitle) || 'YouTube',
+            thumbnail: thumbFor(videoId),
+            tags: s.tags || [],
+            description: (s.description || '').slice(0, 500)
+          };
+          videoMetaCache[videoId] = meta;
+          return meta;
+        }
+      } catch { /* fallback abajo */ }
+      const basic = await fetchVideoDetails(videoId);
+      const meta = { ...basic, tags: [], description: '' };
+      videoMetaCache[videoId] = meta;
+      return meta;
+    }
+
+    const detailsCache = new Map();
+    const detailsInflight = new Map();
+    try {
+      Object.entries(JSON.parse(lsGet('jukebox_meta_v1') || '{}')).forEach(([k, v]) => detailsCache.set(k, v));
+    } catch { /* cache corrupta: se ignora */ }
+    let persistTimer;
+    function persistDetailsCache() {
+      clearTimeout(persistTimer);
+      persistTimer = setTimeout(() => {
+        const entries = [...detailsCache.entries()].slice(-300);
+        lsSet('jukebox_meta_v1', JSON.stringify(Object.fromEntries(entries)));
+      }, 800);
+    }
+
+    function fetchVideoDetails(videoId) {
+      if (detailsCache.has(videoId)) return Promise.resolve(detailsCache.get(videoId));
+      if (detailsInflight.has(videoId)) return detailsInflight.get(videoId);
+      const p = (async () => {
+        try {
+          const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+          if (!r.ok) throw new Error('oembed');
+          const d = await r.json();
+          const details = { title: d.title || 'Tema de YouTube', author: d.author_name || 'YouTube', thumbnail: thumbFor(videoId) };
+          detailsCache.set(videoId, details);
+          persistDetailsCache();
+          return details;
+        } catch {
+          return { title: `Video ${videoId}`, author: 'YouTube', thumbnail: thumbFor(videoId) };
+        } finally { detailsInflight.delete(videoId); }
+      })();
+      detailsInflight.set(videoId, p);
+      return p;
+    }
+
+    /* ---------- Búsqueda ---------- */
+    const searchInput = $('search-input');
+    const suggestionsList = $('suggestions-list');
+    const searchCache = new Map();
+    let debounceTimer, searchController = null;
+    let suggestionItems = [], activeSuggestion = -1;
+
+    function showSuggestions(show) {
+      suggestionsList.classList.toggle('hidden', !show);
+      searchInput.setAttribute('aria-expanded', String(show));
+      if (!show) { suggestionItems = []; activeSuggestion = -1; }
+    }
+
+    function showSuggestionsMessage(text) {
+      suggestionsList.innerHTML = `<li class="p-3 text-xs text-slate-500 text-center">${escapeHTML(text)}</li>`;
+      suggestionItems = []; activeSuggestion = -1;
+      suggestionsList.classList.remove('hidden');
+      searchInput.setAttribute('aria-expanded', 'true');
+    }
+
+    function setActiveSuggestion(i) {
+      suggestionItems.forEach((li, idx) => {
+        const on = idx === i;
+        li.classList.toggle('bg-slate-800', on);
+        li.setAttribute('aria-selected', String(on));
+      });
+      activeSuggestion = i;
+      suggestionItems[i]?.scrollIntoView({ block: 'nearest' });
+    }
+
+    function clearSearch() {
+      searchInput.value = '';
+      showSuggestions(false);
+    }
+
+    function renderSuggestions(items) {
+      if (!items.length) { showSuggestionsMessage('Sin resultados'); return; }
+      suggestionsList.innerHTML = '';
+      suggestionItems = []; activeSuggestion = -1;
+      items.forEach((item) => {
+        const li = document.createElement('li');
+        li.setAttribute('role', 'option');
+        li.setAttribute('aria-selected', 'false');
+        li.className = "p-3 hover:bg-slate-800 cursor-pointer flex items-center gap-3 transition";
+        li.innerHTML = `
+          <img src="${escapeHTML(item.thumbnail)}" alt="" loading="lazy" decoding="async" class="w-12 h-9 object-cover rounded border border-slate-700 flex-shrink-0 bg-slate-800"/>
+          <div class="overflow-hidden flex-1 min-w-0">
+            <p class="font-medium text-xs text-slate-200 truncate">${escapeHTML(item.title)}</p>
+            <p class="text-[10px] text-slate-500 truncate mt-0.5">${escapeHTML(item.author)}</p>
+          </div>
+          <span class="btn btn-primary text-[10px] px-2.5 py-1 flex-shrink-0">Agregar</span>`;
+        li.addEventListener('click', () => { addSongToQueue(item.videoId); clearSearch(); });
+        suggestionsList.appendChild(li);
+        suggestionItems.push(li);
+      });
+      suggestionsList.classList.remove('hidden');
+      searchInput.setAttribute('aria-expanded', 'true');
+    }
+
+    async function searchYouTubeAPI(query) {
+      const key = query.toLowerCase();
+      searchController?.abort();
+      searchController = new AbortController();
+      const { signal } = searchController;
+      try {
+        let items = searchCache.get(key);
+        if (!items) {
+          showSuggestionsMessage('Buscando…');
+          const res = await fetch(
+            `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=5&q=${encodeURIComponent(query)}&type=video&videoEmbeddable=true&key=${YOUTUBE_API_KEY}`,
+            { signal }
+          );
+          const data = await res.json();
+          if (data.error) {
+            const reason = data.error.errors?.[0]?.reason || '';
+            const err = new Error(reason); err.reason = reason; throw err;
+          }
+          items = (data.items || []).filter(i => i.id?.videoId).map(item => ({
+            videoId: item.id.videoId,
+            title: decodeEntities(item.snippet.title),
+            author: decodeEntities(item.snippet.channelTitle),
+            thumbnail: item.snippet.thumbnails?.default?.url || thumbFor(item.id.videoId)
+          }));
+          searchCache.set(key, items);
+          if (searchCache.size > 40) searchCache.delete(searchCache.keys().next().value);
+        }
+        renderSuggestions(items);
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        showSuggestions(false);
+        if (err.reason === 'quotaExceeded' || err.reason === 'dailyLimitExceeded') {
+          showToast('Se agotó la búsqueda de hoy. Pegá el enlace del video para agregarlo.', 'error');
+        } else showToast('Error al buscar en YouTube.', 'error');
+      }
+    }
+
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      const q = e.target.value.trim();
+      if (q.length < 2 || extractVideoID(q)) { searchController?.abort(); showSuggestions(false); return; }
+      debounceTimer = setTimeout(() => searchYouTubeAPI(q), 350);
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { showSuggestions(false); return; }
+      if (!suggestionItems.length) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); setActiveSuggestion((activeSuggestion + 1) % suggestionItems.length); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveSuggestion((activeSuggestion - 1 + suggestionItems.length) % suggestionItems.length); }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !suggestionsList.contains(e.target)) showSuggestions(false);
+    });
+
+    $('song-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const q = searchInput.value.trim();
+      if (!q) return;
+      const vid = extractVideoID(q);
+      if (vid) { addSongToQueue(vid); clearSearch(); }
+      else if (activeSuggestion >= 0 && suggestionItems[activeSuggestion]) suggestionItems[activeSuggestion].click();
+      else { clearTimeout(debounceTimer); searchYouTubeAPI(q); }
+    });
+
+    /* ---------- Cola ---------- */
+    function countUserSongsInQueue() {
+      const uid = getUserId();
+      return uid ? playlistData.filter(s => s.requestedById === uid).length : 0;
+    }
+
+    function isDuplicateInQueue(videoId) { return playlistData.some(s => s.videoId === videoId); }
+
+    async function addSongToQueue(videoId) {
+      if (isAdding) return;
+      if (!isLoggedIn()) { authModal.classList.remove('hidden'); showToast('Ingresá tu nombre para pedir temas.', 'error'); return; }
+      if (playlistData.length >= MAX_QUEUE_SIZE) { showToast(`Cola llena (${MAX_QUEUE_SIZE} temas).`, 'error'); return; }
+      if (isDuplicateInQueue(videoId)) { showToast('Ese tema ya está en la cola.', 'error'); return; }
+      if (countUserSongsInQueue() >= MAX_SONGS_PER_USER) { showToast(`Máximo ${MAX_SONGS_PER_USER} temas por persona.`, 'error'); return; }
+
+      const wait = ADD_COOLDOWN_MS - (Date.now() - lastAddTime);
+      if (wait > 0) { showToast(`Esperá ${formatWait(wait)} para pedir otro tema.`, 'error'); return; }
+
+      isAdding = true;
+      try {
+        await push(playlistRef, { videoId, requestedBy: getUserName(), requestedById: getUserId(), votes: 0, voters: {}, timestamp: Date.now() });
+        lastAddTime = Date.now();
+        lsSet('jukebox_last_add', String(lastAddTime));
+
+        if (currentUser) set(ref(db, `users_playlists/${currentUser.uid}/${videoId}`), { videoId, addedAt: Date.now() }).catch(console.error);
+        else if (guestProfile) saveToGuestPlaylist(videoId);
+
+        const details = await fetchVideoDetails(videoId);
+        showToast(`"${details.title}" agregado a la cola.`, 'success');
+      } catch (err) {
+        console.error(err);
+        const denied = /permission[_ ]denied/i.test(`${err?.code || ''} ${err?.message || ''}`);
+        showToast(denied && !auth.currentUser
+          ? 'La base de datos no deja escribir sin una sesión. Falta activar el acceso anónimo en Firebase.'
+          : 'No se pudo agregar el tema. Probá de nuevo.', 'error');
+      } finally { isAdding = false; }
+    }
+
+    function toggleVote(songKey) {
+      const uid = getUserId();
+      if (!uid) { authModal.classList.remove('hidden'); return; }
+      runTransaction(ref(db, `playlist/${songKey}`), (song) => {
+        if (song) {
+          if (!song.voters) song.voters = {};
+          if (song.voters[uid]) { song.votes = Math.max(0, (song.votes || 1) - 1); delete song.voters[uid]; }
+          else { song.votes = (song.votes || 0) + 1; song.voters[uid] = true; }
+        }
+        return song;
+      }).catch(() => showToast('No se pudo registrar el voto.', 'error'));
+    }
+
+    function playSongNow(song) {
+      if (isHostMode && !playerReady) return;
+      currentSongKey = song.key;
+      isPlaying = true;
+      isFallbackActive = false;
+      nowPlayingVideoId = song.videoId;
+      updateNowPlayingDisplay(song.title, song.requestedBy, song.videoId);
+      updateAutopilotContext(song.videoId, song).catch(console.error);
+      if (isHostMode && player?.loadVideoById) {
+        $('player-label').textContent = 'Parlante activo';
+        player.loadVideoById(song.videoId);
+        safeSet(nowPlayingRef, {
+          active: true, videoId: song.videoId, title: song.title,
+          requestedBy: song.requestedBy, isFallback: false, timestamp: Date.now()
+        });
+      }
+      renderQueue();
+    }
+
+    $('skip-btn').addEventListener('click', () => {
+      if (!isHostMode) return;
+      advanceAfterTrack();
+    });
+
+    function renderQueue() {
+      const container = $('playlist-container');
+      if (!playlistData.length) { container.innerHTML = EMPTY_QUEUE_HTML; return; }
+      const uid = getUserId();
+      const frag = document.createDocumentFragment();
+
+      playlistData.forEach((song, index) => {
+        const hasVoted = uid && song.voters?.[uid];
+        const isMySong = uid && song.requestedById === uid;
+        const isCurrent = !!nowPlayingVideoId && song.videoId === nowPlayingVideoId;
+        const highlight = isCurrent || (!nowPlayingVideoId && index === 0);
+
+        const li = document.createElement('li');
+        li.className = `flex items-center gap-3 p-2.5 rounded-lg border transition ${highlight ? 'bg-amber-500/5 border-amber-500/20' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'}`;
+        li.innerHTML = `
+          <span class="w-6 flex justify-center text-[11px] font-semibold text-slate-500 flex-shrink-0 tabular-nums">${isCurrent ? '<span class="eq" aria-label="Reproduciendo"><i></i><i></i><i></i></span>' : index + 1}</span>
+          <img src="${escapeHTML(song.thumbnail)}" alt="" loading="lazy" decoding="async" class="w-14 h-10 object-cover rounded border border-slate-800 flex-shrink-0 bg-slate-800"/>
+          <div class="overflow-hidden flex-1 min-w-0">
+            <p class="font-medium text-xs text-slate-200 truncate">${escapeHTML(song.title)}</p>
+            <p class="text-[10px] text-slate-500 truncate">${escapeHTML(song.author)}</p>
+            <p class="text-[10px] text-slate-600 truncate mt-0.5">${escapeHTML(song.requestedBy)}</p>
+          </div>
+          <div class="flex items-center gap-1.5 flex-shrink-0">
+            <button class="vote-btn btn btn-ghost btn-icon text-[11px] tabular-nums ${hasVoted ? '!bg-amber-500/20 !border-amber-500/40 !text-amber-400' : ''}" title="Votar" aria-label="Votar este tema" aria-pressed="${hasVoted ? 'true' : 'false'}">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+              <span>${song.votes || 0}</span>
+            </button>
+            ${(isMySong || isHostMode) ? `<button class="delete-btn btn btn-danger btn-icon" title="Eliminar" aria-label="Eliminar de la cola">${TRASH_ICON}</button>` : ''}
+          </div>`;
+
+        li.querySelector('.vote-btn').addEventListener('click', () => toggleVote(song.key));
+        li.querySelector('.delete-btn')?.addEventListener('click', () => {
+          if (isHostMode && song.key === currentSongKey) { advanceAfterTrack(); return; }
+          remove(ref(db, `playlist/${song.key}`)).catch(() => showToast('No se pudo eliminar el tema.', 'error'));
+        });
+        frag.appendChild(li);
+      });
+
+      container.replaceChildren(frag);
+    }
+
+    /* ---------- Mi biblioteca ---------- */
+    let libSeq = 0;
+
+    function renderLibraryItem(song, onAdd, onRemove) {
+      const li = document.createElement('li');
+      li.className = "flex items-center gap-3 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800 hover:border-slate-700 transition";
+      li.innerHTML = `
+        <img src="${escapeHTML(song.thumbnail)}" alt="" loading="lazy" decoding="async" class="w-14 h-10 object-cover rounded border border-slate-800 flex-shrink-0 bg-slate-800"/>
+        <div class="overflow-hidden flex-1 min-w-0">
+          <p class="font-medium text-xs text-slate-200 truncate">${escapeHTML(song.title)}</p>
+          <p class="text-[10px] text-slate-500 truncate">${escapeHTML(song.author)}</p>
+        </div>
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+          <button class="remove-btn btn btn-danger btn-icon" title="Quitar de mi biblioteca" aria-label="Quitar de mi biblioteca">${TRASH_ICON}</button>
+          <button class="add-again-btn btn btn-primary btn-icon text-base font-bold" title="Agregar a la cola" aria-label="Agregar a la cola">+</button>
+        </div>`;
+      li.querySelector('.add-again-btn').addEventListener('click', onAdd);
+      li.querySelector('.remove-btn').addEventListener('click', onRemove);
+      return li;
+    }
+
+    async function renderLibrary(entries, onRemoveItem) {
+      const seq = ++libSeq;
+      const container = $('my-playlist-container');
+      if (!entries.length) { container.innerHTML = EMPTY_LIBRARY_HTML; return; }
+      if (!container.querySelector('img')) container.innerHTML = SKELETON_HTML;
+      const sorted = [...entries].sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+      const songs = await Promise.all(sorted.map(async e => ({ videoId: e.videoId, ...(await fetchVideoDetails(e.videoId)) })));
+      if (seq !== libSeq) return;
+      const frag = document.createDocumentFragment();
+      songs.forEach(s => frag.appendChild(renderLibraryItem(s, () => addSongToQueue(s.videoId), () => onRemoveItem(s.videoId))));
+      container.replaceChildren(frag);
+    }
+
+    function readGuestPlaylist() {
+      try { return JSON.parse(lsGet('jukebox_guest_playlist') || '{}'); } catch { return {}; }
+    }
+
+    function saveToGuestPlaylist(videoId) {
+      const list = readGuestPlaylist();
+      list[videoId] = { videoId, addedAt: Date.now() };
+      lsSet('jukebox_guest_playlist', JSON.stringify(list));
+      renderGuestPlaylist();
+    }
+
+    function removeFromGuestPlaylist(videoId) {
+      const list = readGuestPlaylist();
+      delete list[videoId];
+      lsSet('jukebox_guest_playlist', JSON.stringify(list));
+      renderGuestPlaylist();
+    }
+
+    function renderGuestPlaylist() {
+      if (!guestProfile) return;
+      renderLibrary(Object.values(readGuestPlaylist()), removeFromGuestPlaylist);
+    }
+
+    function listenToMyPlaylist() {
+      if (!currentUser) return;
+      if (unsubscribeLibrary) unsubscribeLibrary();
+      const uid = currentUser.uid;
+      unsubscribeLibrary = onValue(ref(db, `users_playlists/${uid}`), (snap) => {
+        const data = snap.val() || {};
+        renderLibrary(Object.values(data), (videoId) =>
+          remove(ref(db, `users_playlists/${uid}/${videoId}`)).catch(() => showToast('No se pudo quitar el tema.', 'error')));
+      });
+    }
+
+    /* ---------- Sincronización en tiempo real ---------- */
+    function handleNowPlaying(snap) {
+      if (isHostMode) return;
+      const data = snap.val();
+      if (data?.active) {
+        nowPlayingVideoId = data.videoId || null;
+        updateNowPlayingDisplay(data.title, data.requestedBy, data.videoId);
+      } else {
+        nowPlayingVideoId = null;
+        hideNowPlaying();
+      }
+      renderQueue();
+    }
+
+    let queueSeq = 0;
+    async function handlePlaylist(snapshot) {
+      const seq = ++queueSeq;
+      const data = snapshot.val();
+      const queueCount = $('queue-count');
+      const queueStatus = $('queue-status');
+
+      if (!data) {
+        playlistData = [];
+        queueCount.textContent = '0';
+        queueStatus.textContent = '';
+        renderQueue();
+        maybeStartPlayback();
+        return;
+      }
+
+      const keys = Object.keys(data);
+      if (keys.length > MAX_QUEUE_SIZE) {
+        const sorted = keys.map(k => ({ k, ts: data[k].timestamp || 0 })).sort((a, b) => a.ts - b.ts);
+        for (let i = 0; i < keys.length - MAX_QUEUE_SIZE; i++) remove(ref(db, `playlist/${sorted[i].k}`)).catch(console.error);
+        return;
+      }
+
+      queueCount.textContent = keys.length;
+      queueStatus.textContent = keys.length >= MAX_QUEUE_SIZE
+        ? 'Cola llena — esperá a que pasen temas'
+        : `Máx. ${MAX_SONGS_PER_USER} temas por persona · intervalo 2 min`;
+
+      if (!playlistData.length) $('playlist-container').innerHTML = SKELETON_HTML;
+
+      const songs = await Promise.all(keys.map(async key => {
+        const item = data[key];
+        return { key, ...item, ...(await fetchVideoDetails(item.videoId)) };
+      }));
+      if (seq !== queueSeq) return;
+
+      playlistData = songs.sort((a, b) => {
+        if ((b.votes || 0) !== (a.votes || 0)) return (b.votes || 0) - (a.votes || 0);
+        return (a.timestamp || 0) - (b.timestamp || 0);
+      });
+
+      renderQueue();
+      maybeStartPlayback();
+    }
+
+    let detachRealtime = [];
+    let listenErrorShown = false;
+    function handleListenError(err) {
+      console.warn('Lectura de Firebase rechazada:', err?.code || err);
+      if (!listenErrorShown) {
+        listenErrorShown = true;
+        showToast('No se pudo leer la cola. Revisá los permisos de la base de datos.', 'error');
+      }
+    }
+
+    function attachRealtimeListeners() {
+      detachRealtime.forEach(fn => fn());
+      detachRealtime = [
+        onValue(nowPlayingRef, handleNowPlaying, handleListenError),
+        onValue(playlistRef, handlePlaylist, handleListenError)
+      ];
+    }
+    attachRealtimeListeners();
+  </script>
+</body>
+</html>
